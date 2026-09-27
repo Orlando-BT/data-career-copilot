@@ -1,417 +1,288 @@
-\# Data Career Copilot
+# Data Career Copilot
 
+> AI-powered job intelligence and career decision-support system for Data & Analytics roles.
 
+**Current V1:** automated job discovery, relevance filtering, matching, prioritization, CRM persistence, and opportunity notifications.
 
-> AI-powered job intelligence and career decision-support system for Data \& Analytics roles.
+**Long-term vision:** evolve into an AI Career Copilot that supports candidates throughout the journey from opportunity discovery to personalized preparation and interview readiness.
 
+---
 
-
-\*\*Current V1:\*\* automated job discovery, relevance filtering, matching, prioritization, CRM persistence, and opportunity notifications.
-
-
-
-\*\*Long-term vision:\*\* evolve into an AI Career Copilot that supports candidates throughout the journey from opportunity discovery to personalized preparation and interview readiness.
-
-
-
-\---
-
-
-
-\## Problem / Need
-
-
+## Problem / Need
 
 Searching for a job can become a repetitive and time-consuming process.
 
-
-
 Finding relevant opportunities requires searching multiple role variations, reviewing job descriptions, identifying technical requirements, discarding irrelevant positions, checking previously reviewed vacancies, and comparing each role against the candidate's actual skills and constraints.
 
+In my case, that time competed directly with another priority: continuing to develop the technical skills required for Data & Analytics roles, including **Python, SQL, Power BI, and automation**.
 
-
-In my case, that time competed directly with another priority: continuing to develop the technical skills required for Data \& Analytics roles, including \*\*Python, SQL, Power BI, and automation\*\*.
-
-
-
-Data Career Copilot was created to automate the repetitive parts of the job-search process so that more time can be invested in \*\*learning, portfolio projects, and reviewing the opportunities that are actually worth considering\*\*.
-
-
+Data Career Copilot was created to automate the repetitive parts of the job-search process so that more time can be invested in **learning, portfolio projects, and reviewing the opportunities that are actually worth considering**.
 
 The system supports the decision process; it does not make career decisions on behalf of the candidate.
 
+---
 
+## Project Question
 
-\---
+**How can I automate the discovery and initial evaluation of Data & Analytics job opportunities so that I can focus my time on developing technical skills and reviewing the opportunities that are actually worth considering?**
 
-
-
-\## Project Question
-
-
-
-\*\*How can I automate the discovery and initial evaluation of Data \& Analytics job opportunities so that I can focus my time on developing technical skills and reviewing the opportunities that are actually worth considering?\*\*
-
-
-
-\### Answer
-
-
+### Answer
 
 I built an end-to-end job intelligence pipeline that automatically discovers vacancies, removes irrelevant and duplicate results, converts unstructured job descriptions into structured data, evaluates compatibility against a configurable candidate profile, calculates a deterministic compatibility score, stores the results in a lightweight CRM, and sends a prioritized email summary.
 
+---
 
-
-\---
-
-
-
-\## Solution Overview
-
-
+## Solution Overview
 
 The pipeline is organized into eight stages:
 
-
-
-### System Architecture
-
-![Data Career Copilot System Architecture](assets/data-career-copilot-architecture.png)
-
-> High-level architecture of Data Career Copilot, combining deterministic processing, LLM-based semantic analysis, candidate data, rule-based scoring, CRM persistence, and automated notifications.
-
-For a detailed technical breakdown, see [System Architecture](docs/architecture.md).
-
-### Pipeline Stages
-
 ```text
-01\. Job Discovery
 
-&#x20;       ↓
+01. Job Discovery
 
-02\. Normalization \& Relevance Filtering
+        ↓
 
-&#x20;       ↓
+02. Normalization & Relevance Filtering
 
-03\. Deduplication
+        ↓
 
-&#x20;       ↓
+03. Deduplication
 
-04\. AI Job Extraction
+        ↓
 
-&#x20;       ↓
+04. AI Job Extraction
 
-05\. Candidate Profile
+        ↓
 
-&#x20;       ↓
+05. Candidate Profile
 
-06\. AI Matching + Deterministic Scoring
+        ↓
 
-&#x20;       ↓
+06. AI Matching + Deterministic Scoring
 
-07\. CRM Persistence
+        ↓
 
-&#x20;       ↓
+07. CRM Persistence
 
-08\. Prioritized Email Summary
+        ↓
+
+08. Prioritized Email Summary
 
 ```
 
-
-
-The architecture combines \*\*deterministic business rules\*\* with \*\*LLM-based semantic analysis\*\*.
-
-
+The architecture combines **deterministic business rules** with **LLM-based semantic analysis**.
 
 Instead of asking an LLM to control the entire process, each technology is used where it provides the most value:
-
-
 
 ```text
 
 Job Sources
 
-&#x20;    ↓
+     ↓
 
 Normalization
 
-&#x20;    ↓
+     ↓
 
 Deterministic Relevance Filter
 
-&#x20;    ↓
+     ↓
 
 Deduplication
 
-&#x20;    ↓
+     ↓
 
 LLM Structured Extraction
 
-&#x20;    ↓
+     ↓
 
 Candidate Profile
 
-&#x20;    ↓
+     ↓
 
 LLM Semantic Matching
 
-&#x20;    ↓
+     ↓
 
 Deterministic Scoring
 
-&#x20;    ↓
+     ↓
 
 CRM
 
-&#x20;    ↓
+     ↓
 
 Prioritized Notification
 
 ```
 
+---
 
-
-\---
-
-
-
-\## Technology Stack
-
-
+## Technology Stack
 
 | Technology | Purpose |
 
 |---|---|
 
-| \*\*n8n\*\* | Workflow orchestration and scheduling |
+| **n8n** | Workflow orchestration and scheduling |
 
-| \*\*SerpApi / Google Jobs\*\* | Job discovery |
+| **SerpApi / Google Jobs** | Job discovery |
 
-| \*\*JavaScript\*\* | Normalization, relevance filtering, deduplication, and scoring |
+| **JavaScript** | Normalization, relevance filtering, deduplication, and scoring |
 
-| \*\*OpenAI\*\* | Structured job extraction and semantic compatibility analysis |
+| **OpenAI** | Structured job extraction and semantic compatibility analysis |
 
-| \*\*Structured Outputs\*\* | Consistent, machine-readable LLM responses |
+| **Structured Outputs** | Consistent, machine-readable LLM responses |
 
-| \*\*Google Sheets\*\* | Candidate profile and lightweight job-search CRM |
+| **Google Sheets** | Candidate profile and lightweight job-search CRM |
 
-| \*\*Gmail\*\* | Prioritized opportunity summaries |
+| **Gmail** | Prioritized opportunity summaries |
 
-| \*\*Docker\*\* | Portable local n8n runtime |
+| **Docker** | Portable local n8n runtime |
 
-| \*\*Git / GitHub\*\* | Version control and project documentation |
-
-
+| **Git / GitHub** | Version control and project documentation |
 
 ---
 
-## Implementation Preview
+# How It Works
 
-![Data Career Copilot n8n Workflow](assets/n8n-workflow-overview.jpeg)
+## 1. Job Discovery
 
-> Real n8n workflow execution. The production pipeline orchestrates job discovery, deterministic relevance filtering, deduplication, structured LLM extraction, candidate-profile retrieval, semantic matching, rule-based scoring, CRM persistence, and prioritized email notification.
-
-The workflow is organized into eight functional areas that mirror the system architecture described above.
-
----
-
-\# How It Works
-
-
-
-\## 1. Job Discovery
-
-
-
-The workflow generates multiple search families targeting Data \& Analytics roles and retrieves vacancies from Google Jobs through SerpApi.
-
-
+The workflow generates multiple search families targeting Data & Analytics roles and retrieves vacancies from Google Jobs through SerpApi.
 
 The search strategy covers role families such as:
 
+- Data Analyst
 
+- Business Intelligence Analyst
 
-\- Data Analyst
+- Operations Analytics
 
-\- Business Intelligence Analyst
+- Business Analytics
 
-\- Operations Analytics
-
-\- Business Analytics
-
-\- Data \& Automation roles
-
-
+- Data & Automation roles
 
 Using multiple search families increases coverage without relying on a single job-title formulation.
 
+---
 
+## 2. Normalization & Relevance Filtering
 
-\---
-
-
-
-\## 2. Normalization \& Relevance Filtering
-
-
-
-Before any LLM analysis, vacancies pass through deterministic JavaScript logic and the \*\*Data Relevance Filter V1.1\*\*.
-
-
+Before any LLM analysis, vacancies pass through deterministic JavaScript logic and the **Data Relevance Filter V1.1**.
 
 The filter evaluates target role families, analytical signals, hybrid Data + Automation patterns, and exclusion conditions.
 
-
-
 Clearly irrelevant vacancies are removed before reaching the AI stage.
-
-
 
 ```text
 
 Raw Jobs
 
-&#x20;  ↓
+   ↓
 
 Normalization
 
-&#x20;  ↓
+   ↓
 
 Relevance Rules
 
-&#x20;  ↓
+   ↓
 
 Relevant? ── No ──→ Discard
 
-&#x20;  │
+   │
 
-&#x20; Yes
+  Yes
 
-&#x20;  ↓
+   ↓
 
 Continue Pipeline
 
 ```
 
-
-
 This design reduces noise and avoids spending LLM calls on vacancies that are already outside the target scope.
 
+---
 
-
-\---
-
-
-
-\## 3. Deduplication
-
-
+## 3. Deduplication
 
 Vacancies are normalized and assigned identifiers that can be compared against previously processed jobs stored in the CRM.
-
-
 
 ```text
 
 New Vacancy
 
-&#x20;    ↓
+     ↓
 
 Generate Identifier
 
-&#x20;    ↓
+     ↓
 
 Compare with CRM
 
-&#x20;    ↓
+     ↓
 
 Already Processed?
 
-&#x20;  ↙             ↘
+   ↙             ↘
 
-&#x20;Yes              No
+ Yes              No
 
-&#x20; ↓                ↓
+  ↓                ↓
 
 Stop          AI Analysis
 
 ```
 
+Deduplication happens **before expensive AI processing**, preventing repeated analysis and unnecessary API usage.
 
+---
 
-Deduplication happens \*\*before expensive AI processing\*\*, preventing repeated analysis and unnecessary API usage.
-
-
-
-\---
-
-
-
-\## 4. Structured AI Job Extraction
-
-
+## 4. Structured AI Job Extraction
 
 Relevant job descriptions are analyzed using an LLM.
 
-
-
 Instead of requesting a free-form summary, the workflow enforces a structured output schema.
-
-
 
 The system extracts information such as:
 
+- programming and query languages
 
+- databases
 
-\- programming and query languages
+- BI tools
 
-\- databases
+- data competencies
 
-\- BI tools
+- responsibilities
 
-\- data competencies
+- mandatory requirements
 
-\- responsibilities
+- desirable requirements
 
-\- mandatory requirements
+- exclusionary requirements
 
-\- desirable requirements
+- core technologies
 
-\- exclusionary requirements
+- seniority
 
-\- core technologies
+- years of experience
 
-\- seniority
+- English requirements
 
-\- years of experience
+- work modality
 
-\- English requirements
-
-\- work modality
-
-\- salary information
-
-
+- salary information
 
 This converts unstructured job descriptions into standardized information that downstream nodes can process programmatically.
 
+---
 
-
-\---
-
-
-
-\## 5. Candidate Profile
-
-
+## 5. Candidate Profile
 
 The candidate profile is stored separately from the workflow logic and retrieved dynamically from Google Sheets.
 
-
-
 The profile contains information such as:
-
-
 
 ```text
 
@@ -421,7 +292,7 @@ Technical Skills
 
 Tools
 
-Data \& Analytics Experience
+Data & Analytics Experience
 
 English Level
 
@@ -437,85 +308,55 @@ Professional Constraints
 
 ```
 
-
-
 Separating the candidate profile from the workflow makes the system easier to maintain.
-
-
 
 Skills, experience, preferences, and constraints can evolve without rewriting the core pipeline.
 
+---
 
+## 6. Hybrid AI Matching & Deterministic Scoring
 
-\---
+One of the main architectural decisions in the project is separating **semantic interpretation** from **numerical scoring**.
 
-
-
-\## 6. Hybrid AI Matching \& Deterministic Scoring
-
-
-
-One of the main architectural decisions in the project is separating \*\*semantic interpretation\*\* from \*\*numerical scoring\*\*.
-
-
-
-\### LLM responsibility
-
-
+### LLM responsibility
 
 The LLM compares the structured vacancy against the candidate profile and evaluates dimensions such as:
 
+- relevant experience
 
+- tools and technologies
 
-\- relevant experience
+- responsibilities
 
-\- tools and technologies
+- industry context
 
-\- responsibilities
+- seniority
 
-\- industry context
+- language
 
-\- seniority
+- location and modality
 
-\- language
-
-\- location and modality
-
-\- salary
-
-
+- salary
 
 It also identifies:
 
+- strengths
 
+- missing skills
 
-\- strengths
+- critical missing requirements
 
-\- missing skills
+- missing core technologies
 
-\- critical missing requirements
+- explicit exclusionary conditions
 
-\- missing core technologies
+### Deterministic scoring responsibility
 
-\- explicit exclusionary conditions
-
-
-
-\### Deterministic scoring responsibility
-
-
-
-The LLM does \*\*not\*\* generate the final compatibility percentage.
-
-
+The LLM does **not** generate the final compatibility percentage.
 
 A JavaScript scoring layer converts the structured evaluation into a deterministic score.
 
-
-
 The current scoring model uses:
-
-
 
 | Dimension | Weight |
 
@@ -523,7 +364,7 @@ The current scoring model uses:
 
 | Relevant experience | 25 |
 
-| Tools \& technologies | 25 |
+| Tools & technologies | 25 |
 
 | Responsibilities | 15 |
 
@@ -537,15 +378,9 @@ The current scoring model uses:
 
 | Salary | 5 |
 
-
-
 Additional rules apply penalties and score caps when critical requirements or core technologies are missing.
 
-
-
 The final result is classified into three actionable categories:
-
-
 
 ```text
 
@@ -557,27 +392,15 @@ The final result is classified into three actionable categories:
 
 ```
 
+This hybrid approach makes the final prioritization more **reproducible, explainable, and auditable** than asking an LLM to invent a compatibility percentage directly.
 
+---
 
-This hybrid approach makes the final prioritization more \*\*reproducible, explainable, and auditable\*\* than asking an LLM to invent a compatibility percentage directly.
-
-
-
-\---
-
-
-
-\## 7. CRM Persistence
-
-
+## 7. CRM Persistence
 
 Processed vacancies and their evaluation results are stored in Google Sheets.
 
-
-
 The spreadsheet works as a lightweight job-search CRM containing information such as:
-
-
 
 ```text
 
@@ -611,31 +434,17 @@ Notes
 
 ```
 
-
-
 This persistence layer also allows future executions to identify previously processed opportunities.
-
-
 
 Manual fields remain available for application tracking and personal notes.
 
+---
 
-
-\---
-
-
-
-\## 8. Prioritized Email Summary
-
-
+## 8. Prioritized Email Summary
 
 At the end of each execution, the workflow generates an HTML email containing the most relevant opportunities.
 
-
-
 Vacancies classified as:
-
-
 
 ```text
 
@@ -645,15 +454,9 @@ REVIEW
 
 ```
 
-
-
 are included as detailed opportunity cards.
 
-
-
 Jobs classified as:
-
-
 
 ```text
 
@@ -661,15 +464,9 @@ DISCARD
 
 ```
 
-
-
 are counted for execution-level visibility but excluded from the detailed recommendation list.
 
-
-
 Each opportunity can include:
-
-
 
 ```text
 
@@ -699,123 +496,73 @@ Application URL
 
 ```
 
-
-
 The goal is not to replace human judgment, but to significantly reduce the amount of information that needs to be reviewed manually.
 
+---
 
-
-\---
-
-
-
-\# Validation
-
-
+# Validation
 
 The workflow has been tested using real job-search results.
 
-
-
-\## End-to-End Execution
-
-
+## End-to-End Execution
 
 One full execution processed:
-
-
 
 | Result | Vacancies |
 
 |---|---:|
 
-| New vacancies processed | \*\*47\*\* |
+| New vacancies processed | **47** |
 
-| Apply | \*\*9\*\* |
+| Apply | **9** |
 
-| Review | \*\*7\*\* |
+| Review | **7** |
 
-| Discard | \*\*31\*\* |
+| Discard | **31** |
 
-| Opportunities surfaced for review | \*\*16\*\* |
-
-
+| Opportunities surfaced for review | **16** |
 
 Instead of manually reviewing all 47 new vacancies with the same level of attention, the pipeline surfaced 16 opportunities classified as Apply or Review for prioritized human evaluation.
 
-
-
 > These numbers represent one validated execution and should not be interpreted as a global accuracy measurement of the system.
 
+---
 
-
-\---
-
-
-
-\## Relevance Filter Validation
-
-
+## Relevance Filter Validation
 
 The relevance-filtering component was also evaluated separately using a labeled sample of job vacancies.
 
-
-
 A previous baseline evaluation produced approximately:
-
-
 
 | Metric | Result |
 
 |---|---:|
 
-| Precision | \*\*91.7%\*\* |
+| Precision | **91.7%** |
 
-| Recall | \*\*97.8%\*\* |
+| Recall | **97.8%** |
 
-| F1 Score | \*\*94.6%\*\* |
+| F1 Score | **94.6%** |
 
-
-
-These results were used diagnostically to identify false positives and false negatives and informed the evolution toward \*\*Data Relevance Filter V1.1\*\*.
-
-
+These results were used diagnostically to identify false positives and false negatives and informed the evolution toward **Data Relevance Filter V1.1**.
 
 They should not be interpreted as universal production performance metrics because the evaluation was performed on a limited labeled sample.
 
-
-
-The current development approach favors \*\*evidence-based iteration\*\*:
-
-
+The current development approach favors **evidence-based iteration**:
 
 > isolated anomalies are documented and observed, while filtering or scoring rules are modified only when an error pattern repeats across independent executions.
 
-
-
 This reduces the risk of overfitting the workflow to individual vacancies.
 
+---
 
+# Key Design Decisions
 
-\---
-
-
-
-\# Key Design Decisions
-
-
-
-\## Why not use AI for everything?
-
-
+## Why not use AI for everything?
 
 Not every task requires an LLM.
 
-
-
 Deterministic code handles:
-
-
 
 ```text
 
@@ -831,11 +578,7 @@ Workflow Control
 
 ```
 
-
-
 while the LLM is reserved for tasks that benefit from semantic interpretation:
-
-
 
 ```text
 
@@ -849,267 +592,171 @@ Identifying Strengths and Gaps
 
 ```
 
-
-
 This creates a hybrid architecture where AI complements traditional programming instead of replacing it.
 
+---
 
-
-\---
-
-
-
-\## Why calculate the score outside the LLM?
-
-
+## Why calculate the score outside the LLM?
 
 A freely generated compatibility percentage would be difficult to reproduce and audit.
 
-
-
 The LLM therefore produces structured qualitative assessments while explicit JavaScript rules calculate the final score.
-
-
 
 ```text
 
 LLM
 
-&#x20;↓
+ ↓
 
 Structured Evaluation
 
-&#x20;↓
+ ↓
 
 Deterministic Rules
 
-&#x20;↓
+ ↓
 
 Compatibility Score
 
 ```
 
-
-
 The result is easier to inspect, test, and modify.
 
+---
 
-
-\---
-
-
-
-\## Why filter vacancies before AI analysis?
-
-
+## Why filter vacancies before AI analysis?
 
 Clearly irrelevant vacancies do not require semantic analysis.
-
-
 
 ```text
 
 100 Raw Jobs
 
-&#x20;     ↓
+      ↓
 
 Deterministic Filtering
 
-&#x20;     ↓
+      ↓
 
 Relevant Jobs Only
 
-&#x20;     ↓
+      ↓
 
 LLM Processing
 
 ```
 
-
-
 This reduces unnecessary API usage and keeps AI focused on the jobs where semantic interpretation provides value.
 
+---
 
-
-\---
-
-
-
-\## Why deduplicate before AI processing?
-
-
+## Why deduplicate before AI processing?
 
 Analyzing the same vacancy multiple times would increase API usage without adding new information.
 
-
-
 Deduplication therefore happens before the LLM processing loop.
 
+---
 
-
-\---
-
-
-
-\## Why separate the candidate profile?
-
-
+## Why separate the candidate profile?
 
 Candidate information changes independently from workflow logic.
 
-
-
 Keeping the profile outside the pipeline means that skills, experience, salary expectations, location constraints, or target roles can be updated without modifying the workflow architecture.
 
+---
 
-
-\---
-
-
-
-\## Why run n8n locally with Docker?
-
-
+## Why run n8n locally with Docker?
 
 The current workload does not require always-on cloud infrastructure.
 
-
-
 Running n8n locally with Docker keeps infrastructure costs low while providing:
 
+- environment isolation
 
+- persistent workflow data
 
-\- environment isolation
+- portability
 
-\- persistent workflow data
+- reproducible deployment
 
-\- portability
+- control over the runtime environment
 
-\- reproducible deployment
-
-\- control over the runtime environment
-
-
-
-For the current execution frequency, this provides a favorable \*\*cost-benefit ratio\*\*.
-
-
+For the current execution frequency, this provides a favorable **cost-benefit ratio**.
 
 The containerized architecture also preserves a clear migration path:
-
-
 
 ```text
 
 Local Docker
 
-&#x20;    ↓
+     ↓
 
 VPS
 
-&#x20;    ↓
+     ↓
 
 Managed n8n / Cloud Infrastructure
 
 ```
 
-
-
 If higher availability or execution frequency becomes necessary, the workflow can migrate to an always-on environment without redesigning the business logic.
 
+---
 
+# Conclusions
 
-\---
-
-
-
-\# Conclusions
-
-
-
-The project showed that job matching benefits from a \*\*hybrid architecture\*\* rather than delegating the entire process to an LLM.
-
-
+The project showed that job matching benefits from a **hybrid architecture** rather than delegating the entire process to an LLM.
 
 Deterministic logic is well suited to repeatable operations such as filtering, deduplication, and scoring, while an LLM adds value when interpreting unstructured job descriptions and comparing semantic requirements.
 
-
-
-The validation process also showed that \*\*technical similarity alone is not sufficient to identify a suitable opportunity\*\*.
-
-
+The validation process also showed that **technical similarity alone is not sufficient to identify a suitable opportunity**.
 
 A vacancy can have strong technical alignment while still being unsuitable because of factors such as:
 
+- mandatory technologies
 
+- required experience level
 
-\- mandatory technologies
+- language requirements
 
-\- required experience level
+- academic requirements
 
-\- language requirements
+- work modality
 
-\- academic requirements
+- geographic constraints
 
-\- work modality
-
-\- geographic constraints
-
-
-
-For this reason, Data Career Copilot is designed as a \*\*decision-support system\*\*, not an autonomous career decision-maker.
-
-
+For this reason, Data Career Copilot is designed as a **decision-support system**, not an autonomous career decision-maker.
 
 The system automates information processing and prioritization while leaving the final application decision to the candidate.
 
+---
 
-
-\---
-
-
-
-\# Current Limitations
-
-
+# Current Limitations
 
 The current version has several known limitations:
 
+- Job descriptions can be incomplete or ambiguous.
 
+- Source data can contain inconsistent salary or modality information.
 
-\- Job descriptions can be incomplete or ambiguous.
+- Semantic evaluations can vary between LLM executions.
 
-\- Source data can contain inconsistent salary or modality information.
+- Deterministic relevance filtering can produce false positives or false negatives.
 
-\- Semantic evaluations can vary between LLM executions.
+- The current validation sample is not sufficient to claim overall matching accuracy.
 
-\- Deterministic relevance filtering can produce false positives or false negatives.
+- V1 currently depends on a single job-discovery provider.
 
-\- The current validation sample is not sufficient to claim overall matching accuracy.
-
-\- V1 currently depends on a single job-discovery provider.
-
-
-
-Local Docker execution is treated as a \*\*cost-conscious deployment decision rather than a functional limitation\*\*.
-
-
+Local Docker execution is treated as a **cost-conscious deployment decision rather than a functional limitation**.
 
 The trade-off is host availability, while containerization preserves portability to always-on infrastructure if that requirement emerges.
 
+---
 
-
-\---
-
-
-
-\# Future Roadmap
-
-
+# Future Roadmap
 
 The current version focuses on:
-
-
 
 ```text
 
@@ -1117,59 +764,45 @@ DISCOVER → EVALUATE → PRIORITIZE
 
 ```
 
-
-
 The long-term vision is broader.
 
-
-
 Data Career Copilot could evolve into an end-to-end career assistant that supports candidates throughout the journey from discovering an opportunity to preparing for the hiring process.
-
-
 
 ```text
 
 DISCOVER
 
-&#x20;   ↓
+    ↓
 
 EVALUATE
 
-&#x20;   ↓
+    ↓
 
 ADAPT
 
-&#x20;   ↓
+    ↓
 
 PREPARE
 
-&#x20;   ↓
+    ↓
 
 PRACTICE
 
-&#x20;   ↓
+    ↓
 
 APPLY
 
-&#x20;   ↓
+    ↓
 
 LEARN
 
 ```
 
-
-
 Potential future capabilities include:
 
-
-
-\### Multi-Source Job Ingestion
-
-
+### Multi-Source Job Ingestion
 
 Integrate additional job boards, APIs, and permitted job-data sources into a common normalization pipeline.
-
-
 
 ```text
 
@@ -1181,55 +814,39 @@ Job Source C ─┘
 
 ```
 
-
-
 This would reduce dependency on a single discovery provider and increase vacancy coverage.
 
-
-
-\### Job-Specific CV Generation
-
-
+### Job-Specific CV Generation
 
 For selected opportunities, the system could generate a tailored version of the candidate's CV using:
-
-
 
 ```text
 
 Candidate Profile
 
-\+
++
 
 Original CV
 
-\+
++
 
 Vacancy Requirements
 
-\+
++
 
 Strengths
 
-\+
++
 
 Relevant Experience
 
 ```
 
+The LLM would be allowed to restructure, prioritize, and improve presentation, but **never fabricate experience, skills, education, or achievements**.
 
-
-The LLM would be allowed to restructure, prioritize, and improve presentation, but \*\*never fabricate experience, skills, education, or achievements\*\*.
-
-
-
-\### Application Tracking
-
-
+### Application Tracking
 
 Extend the current CRM to monitor:
-
-
 
 ```text
 
@@ -1247,111 +864,71 @@ Opportunity
 
 ```
 
-
-
 This would make it possible to analyze the complete job-search funnel.
 
-
-
-\### Personalized Interview Preparation
-
-
+### Personalized Interview Preparation
 
 The requirements extracted from each vacancy could be used to automatically identify what the candidate should practice before an interview.
 
-
-
 For example:
-
-
 
 ```text
 
 Vacancy Requirements
 
-&#x20;       +
+        +
 
 Candidate Profile
 
-&#x20;       ↓
+        ↓
 
 Skill Gap Analysis
 
-&#x20;       ↓
+        ↓
 
 Personalized Practice
 
 ```
 
-
-
-\### Multiple Interview Modes
-
-
+### Multiple Interview Modes
 
 Practice sessions could be generated for different stages of a hiring process:
 
+- Technical interview
 
+- People / HR interview
 
-\- Technical interview
+- Hiring manager interview
 
-\- People / HR interview
+- Behavioral interview
 
-\- Hiring manager interview
-
-\- Behavioral interview
-
-\- Role-specific scenarios
-
-
+- Role-specific scenarios
 
 The practice content would be generated using the actual vacancy requirements rather than generic interview questions.
 
-
-
-\### Actionable Opportunity Notifications
-
-
+### Actionable Opportunity Notifications
 
 Future email notifications could include actions such as:
-
-
 
 ```text
 
 \[ View Vacancy ]
 
-
-
 \[ Generate Tailored CV ]
 
-
-
 \[ Practice Technical Interview ]
-
-
 
 \[ Practice HR Interview ]
 
 ```
 
-
-
 Each action could trigger a specialized workflow.
-
-
 
 This would transform the notification layer from a passive report into an entry point for additional career workflows.
 
-
-
-\### Interview Feedback \& Skill-Gap Analysis
-
-
+### Interview Feedback & Skill-Gap Analysis
 
 Practice sessions could generate structured feedback identifying:
-
-
 
 ```text
 
@@ -1367,225 +944,151 @@ Technical Topics to Review
 
 ```
 
-
-
 Those results could then generate another preparation cycle.
 
-
-
-\### Career Feedback Loop
-
-
+### Career Feedback Loop
 
 Application and interview outcomes could eventually become new input data.
-
-
 
 ```text
 
 Job Discovery
 
-&#x20;     ↓
+      ↓
 
 Matching
 
-&#x20;     ↓
+      ↓
 
 Application
 
-&#x20;     ↓
+      ↓
 
 Interview
 
-&#x20;     ↓
+      ↓
 
 Outcome
 
-&#x20;     ↓
+      ↓
 
 Feedback
 
-&#x20;     ↓
+      ↓
 
 Better Career Intelligence
 
 ```
 
-
-
 This would allow future versions to analyze which skills, roles, companies, and opportunity characteristics lead to better outcomes.
 
-
-
-\### Labor-Market Analytics
-
-
+### Labor-Market Analytics
 
 Historical vacancy data could also support analytics such as:
 
+- most requested technologies
 
+- recurring skill gaps
 
-\- most requested technologies
+- salary distributions
 
-\- recurring skill gaps
+- demand by role family
 
-\- salary distributions
+- remote vs. hybrid opportunities
 
-\- demand by role family
+- required experience trends
 
-\- remote vs. hybrid opportunities
+- candidate compatibility trends
 
-\- required experience trends
-
-\- candidate compatibility trends
-
-\- application conversion rates
-
-
+- application conversion rates
 
 A future Power BI or analytics layer could turn the accumulated CRM data into labor-market intelligence.
 
-
-
-\### Cloud Deployment
-
-
+### Cloud Deployment
 
 If higher availability or execution frequency becomes necessary, the current containerized architecture can migrate from local Docker to:
 
+- a VPS
 
+- managed Docker infrastructure
 
-\- a VPS
-
-\- managed Docker infrastructure
-
-\- managed n8n hosting
-
-
+- managed n8n hosting
 
 without changing the fundamental workflow design.
 
+---
 
-
-\---
-
-
-
-\# Security
-
-
+# Security
 
 Secrets are not stored directly in the public workflow.
 
-
-
 For example, the SerpApi credential is retrieved through the environment variable:
-
-
 
 ```text
 
-SERPAPI\_API\_KEY
+SERPAPI_API_KEY
 
 ```
-
-
 
 The repository includes an `.env.example` file documenting the required environment variable without exposing the real credential.
 
-
-
 ```env
 
-SERPAPI\_API\_KEY=your\_serpapi\_api\_key\_here
+SERPAPI_API_KEY=your_serpapi_api_key_here
 
 ```
 
-
-
 Public workflow exports must be sanitized before publication to remove:
 
+- API keys
 
+- personal email addresses
 
-\- API keys
+- Google Sheets document IDs
 
-\- personal email addresses
+- credential IDs
 
-\- Google Sheets document IDs
+- credential names
 
-\- credential IDs
+- instance-specific identifiers
 
-\- credential names
-
-\- instance-specific identifiers
-
-\- environment-specific metadata
-
-
+- environment-specific metadata
 
 The production workflow should never be published directly without this sanitization step.
 
+---
 
-
-\---
-
-
-
-\# Deployment
-
-
+# Deployment
 
 V1 runs in a local Docker environment with n8n and is scheduled for automated execution.
 
-
-
 The deployment strategy was selected to keep infrastructure costs proportional to the current workload while retaining portability.
-
-
 
 ```text
 
 Windows Host
 
-&#x20;    ↓
+     ↓
 
 Docker
 
-&#x20;    ↓
+     ↓
 
 n8n
 
-&#x20;    ↓
+     ↓
 
 Data Career Copilot
 
 ```
 
-
-
 The environment uses persistent Docker storage so workflow configuration survives container recreation.
 
+Detailed setup and deployment instructions are planned for a future `docs/local-deployment.md` document.
 
+---
 
-Detailed setup and deployment instructions will be documented in:
-
-
-
-```text
-
-docs/local-deployment.md
-
-```
-
-
-
-\---
-
-
-
-\# Repository Structure
-
-
+# Repository Structure
 
 ```text
 
@@ -1626,36 +1129,22 @@ data-career-copilot/
 │
 
 └── assets/
-    ├── data-career-copilot-architecture.png
-    └── n8n-workflow-overview.jpeg
+
+    └── architecture-diagram.png
 
 ```
 
-
-
 The public workflow will contain the system logic while excluding private credentials and environment-specific identifiers.
 
+---
 
+# Project Status
 
-\---
-
-
-
-\# Project Status
-
-
-
-\### V1 — Functional
-
-
+### V1 — Functional
 
 The end-to-end pipeline is operational and scheduled for automated execution.
 
-
-
 Current V1 covers:
-
-
 
 ```text
 
@@ -1685,23 +1174,12 @@ Current V1 covers:
 
 ```
 
+Future iterations will focus on **evaluation, observability, additional ingestion sources, application tracking, CV personalization, and interview preparation** rather than expanding the workflow without measurable evidence.
 
+---
 
-Future iterations will focus on \*\*evaluation, observability, additional ingestion sources, application tracking, CV personalization, and interview preparation\*\* rather than expanding the workflow without measurable evidence.
+## Author
 
+**Orlando Bautista Trejo**
 
-
-\---
-
-
-
-\## Author
-
-
-
-\*\*Orlando Bautista Trejo\*\*
-
-
-
-Project developed as part of a portfolio focused on \*\*Data Analytics, AI Automation, and intelligent operational systems\*\*.
-
+Project developed as part of a portfolio focused on **Data Analytics, AI Automation, and intelligent operational systems**.
