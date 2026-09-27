@@ -1,0 +1,29 @@
+﻿# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# n8n / local runtime
+.n8n/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+
+# Python cache (future utilities)
+__pycache__/
+*.py[cod]
+.venv/
+venv/

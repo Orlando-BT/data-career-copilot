@@ -1,0 +1,1992 @@
+{
+  "name": "Data Career Copilot — Analytics",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_jobs"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "location",
+              "value": "Mexico City, Mexico"
+            },
+            {
+              "name": "gl",
+              "value": "mx"
+            },
+            {
+              "name": "hl",
+              "value": "es"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $env.SERPAPI_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -16,
+        32
+      ],
+      "id": "54ad3e16-3205-4137-8e0b-eeaf8077ed6b",
+      "name": "Consultar Vacantes en Google Jobs"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const job = $json;\n\n// =====================================\n// DATA RELEVANCE FILTER V1.1\n// =====================================\n\n// =====================================\n// 0. NORMALIZACIÓN DE TEXTO\n// =====================================\n\nfunction normalizar(texto = '') {\n  return texto\n    .toString()\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '');\n}\n\nconst titulo = normalizar(job.puesto || '');\nconst descripcion = normalizar(job.descripcion || '');\nconst texto = `${titulo} ${descripcion}`;\n\nfunction contiene(textoBase, termino) {\n  const t = normalizar(termino);\n  return textoBase.includes(t);\n}\n\nfunction buscarCoincidencias(textoBase, lista) {\n  return lista.filter(keyword => contiene(textoBase, keyword));\n}\n\n// =====================================\n// 1. FAMILIAS DE ROL OBJETIVO\n// =====================================\n\nconst titulosObjetivo = [\n  // Data Analysis\n  'data analyst',\n  'analista de datos',\n  'data analytics analyst',\n  'data analytics specialist',\n  'data analytics',\n\n  // Business Intelligence\n  'business intelligence analyst',\n  'business intelligence specialist',\n  'bi analyst',\n  'analista bi',\n  'analista de business intelligence',\n\n  // Reporting\n  'reporting analyst',\n  'analista de reporting',\n  'reporting specialist',\n  'analista de reportes',\n\n  // Business Analytics\n  'business analytics analyst',\n  'business analytics specialist',\n\n  // Operations Analytics\n  'operations analytics analyst',\n  'operations analytics',\n  'operational analytics',\n  'analista de analitica de operaciones',\n\n  // Otros roles analíticos cercanos\n  'performance analyst',\n  'insights analyst',\n  'analytics analyst'\n];\n\nconst coincidenciasTitulo =\n  buscarCoincidencias(titulo, titulosObjetivo);\n\n// =====================================\n// 2. TÍTULOS AMBIGUOS\n// =====================================\n\nconst titulosAmbiguos = [\n  'business analyst',\n  'analista de negocio',\n  'analista de negocios',\n\n  // V1.1: permite evaluar Analista Funcional\n  // mediante evidencia adicional de Data\n  'analista funcional',\n  'functional analyst',\n\n  'operations analyst',\n  'operational analyst',\n  'analista de operaciones',\n\n  'commercial analyst',\n  'analista comercial',\n\n  'sales analyst',\n  'analista de ventas',\n\n  'performance analyst',\n  'analista de performance'\n];\n\nconst coincidenciasTituloAmbiguo =\n  buscarCoincidencias(titulo, titulosAmbiguos);\n\nconst esTituloAmbiguo =\n  coincidenciasTituloAmbiguo.length > 0;\n\n// =====================================\n// 3. HERRAMIENTAS DATA / BI\n// =====================================\n\nconst herramientasData = [\n  'sql',\n  'postgresql',\n  'mysql',\n\n  'power bi',\n  'powerbi',\n  'tableau',\n  'looker',\n  'looker studio',\n  'qlik',\n\n  'excel',\n  'power query',\n  'dax',\n\n  'python',\n  'pandas',\n\n  'bigquery',\n  'snowflake',\n  'redshift'\n];\n\nconst coincidenciasHerramientas =\n  buscarCoincidencias(texto, herramientasData);\n\nconst tieneHerramientasData =\n  coincidenciasHerramientas.length > 0;\n\n// =====================================\n// 4. SEÑALES DE ANÁLISIS DE DATOS\n// =====================================\n\nconst senalesAnalisis = [\n  'analisis de datos',\n  'data analysis',\n  'data analytics',\n  'analitica de datos',\n\n  'business intelligence',\n\n  'data-driven',\n  'data driven',\n  'insights',\n  'business insights',\n\n  'analisis estadistico',\n  'statistical analysis',\n\n  'analisis exploratorio',\n  'exploratory data analysis',\n\n  'tendencias',\n  'trends',\n  'patterns',\n  'patrones'\n];\n\nconst coincidenciasAnalisis =\n  buscarCoincidencias(texto, senalesAnalisis);\n\nconst tieneAnalisis =\n  coincidenciasAnalisis.length > 0;\n\n// =====================================\n// 5. REPORTING / DASHBOARDS / KPIs\n// =====================================\n\nconst senalesReporting = [\n  'dashboard',\n  'dashboards',\n\n  'reporting',\n  'reportes',\n  'reports',\n\n  'kpi',\n  'kpis',\n  'indicadores',\n\n  'metricas',\n  'metrics',\n\n  'data visualization',\n  'visualizacion de datos',\n\n  'business reporting',\n  'performance reporting',\n\n  'performance analysis',\n  'analisis de desempeno',\n\n  'business review',\n  'performance tracking'\n];\n\nconst coincidenciasReporting =\n  buscarCoincidencias(texto, senalesReporting);\n\nconst tieneReporting =\n  coincidenciasReporting.length > 0;\n\n// =====================================\n// 6. PREPARACIÓN / TRANSFORMACIÓN\n// =====================================\n\nconst senalesPreparacionDatos = [\n  'data cleaning',\n  'limpieza de datos',\n\n  'data cleansing',\n  'data preparation',\n  'preparacion de datos',\n\n  'data transformation',\n  'transformacion de datos',\n\n  'etl',\n\n  'data modeling',\n  'data modelling',\n  'modelado de datos',\n\n  'data warehouse',\n  'data warehousing',\n\n  'data quality',\n  'calidad de datos'\n];\n\nconst coincidenciasPreparacionDatos =\n  buscarCoincidencias(texto, senalesPreparacionDatos);\n\nconst tienePreparacionDatos =\n  coincidenciasPreparacionDatos.length > 0;\n\n// =====================================\n// 7. NEGOCIO / OPERACIONES\n// =====================================\n\nconst senalesNegocio = [\n  'business performance',\n  'sales performance',\n  'operational performance',\n\n  'business planning',\n  'decision making',\n  'toma de decisiones',\n\n  'operaciones',\n  'operations',\n\n  'process improvement',\n  'mejora de procesos',\n  'continuous improvement',\n  'mejora continua',\n\n  'stakeholders',\n  'business requirements',\n\n  'ecommerce',\n  'e-commerce',\n\n  'customer experience',\n  'customer operations'\n];\n\nconst coincidenciasNegocio =\n  buscarCoincidencias(texto, senalesNegocio);\n\nconst tieneNegocio =\n  coincidenciasNegocio.length > 0;\n\n// =====================================\n// 8. AUTOMATIZACIÓN\n// =====================================\n\nconst senalesAutomatizacion = [\n  'automation',\n  'automatizacion',\n  'reporting automation',\n  'automatizacion de reportes',\n  'workflow automation',\n  'power automate',\n  'power apps',\n  'n8n'\n];\n\nconst coincidenciasAutomatizacion =\n  buscarCoincidencias(texto, senalesAutomatizacion);\n\nconst tieneAutomatizacion =\n  coincidenciasAutomatizacion.length > 0;\n\n// =====================================\n// 9. PERFILES TÉCNICOS NO PRIORITARIOS\n// =====================================\n\nconst tecnicosNoPrioritarios = [\n  'data engineer',\n  'ingeniero de datos',\n\n  'machine learning engineer',\n  'ml engineer',\n\n  'data scientist',\n  'cientifico de datos',\n\n  'ai engineer',\n  'artificial intelligence engineer',\n\n  'mlops engineer',\n\n  'software engineer',\n  'ingeniero de software',\n\n  'backend engineer',\n  'backend developer',\n\n  'frontend developer',\n  'frontend engineer',\n\n  'full stack',\n  'fullstack',\n\n  'devops engineer',\n\n  'database administrator',\n  'dba'\n];\n\nconst coincidenciasTecnicas =\n  buscarCoincidencias(titulo, tecnicosNoPrioritarios);\n\nconst esTecnicoNoPrioritario =\n  coincidenciasTecnicas.length > 0;\n\n// =====================================\n// 9.1 V1.1 — ML / DATA SCIENCE POR FUNCIÓN\n// =====================================\n\n// V1 solo detectaba perfiles técnicos por título.\n// V1.1 también detecta cuando una vacante con título\n// aparentemente BI/Data tiene como función CENTRAL\n// Machine Learning / Data Science.\n//\n// Importante:\n// una sola mención de ML NO bloquea la vacante.\n\nconst senalesMLDataScience = [\n  'machine learning',\n  'aprendizaje automatico',\n  'data science',\n  'ciencia de datos',\n  'modelos predictivos',\n  'predictive models',\n  'predictive modeling',\n  'predictive modelling',\n  'modelos de machine learning',\n  'machine learning models',\n  'entrenamiento de modelos',\n  'model training'\n];\n\nconst coincidenciasMLDataScience =\n  buscarCoincidencias(descripcion, senalesMLDataScience);\n\n// Exigimos al menos 2 señales diferentes.\n// Esto evita bloquear un Data Analyst simplemente\n// porque la descripción menciona ML una vez.\n\nconst funcionMLDataScience =\n  coincidenciasMLDataScience.length >= 2;\n\n// =====================================\n// 10. PILARES DATA\n// =====================================\n\nconst pilares = [\n  tieneHerramientasData,\n  tieneAnalisis,\n  tieneReporting,\n  tienePreparacionDatos\n].filter(Boolean).length;\n\n// =====================================\n// 11. SCORE DE RELEVANCIA\n// =====================================\n\nlet score = 0;\n\n// Título objetivo = señal más fuerte\nif (coincidenciasTitulo.length > 0) score += 5;\n\n// Título ambiguo aporta poco por sí mismo\nif (esTituloAmbiguo) score += 1;\n\n// Señales funcionales\nif (tieneHerramientasData) score += 2;\nif (tieneAnalisis) score += 2;\nif (tieneReporting) score += 2;\nif (tienePreparacionDatos) score += 1;\n\n// Contexto de negocio\nif (tieneNegocio) score += 1;\n\n// Automatización como complemento\nif (tieneAutomatizacion) score += 1;\n\n// Combinaciones especialmente relevantes\nif (tieneHerramientasData && tieneAnalisis) score += 1;\nif (tieneHerramientasData && tieneReporting) score += 1;\nif (tieneAnalisis && tieneReporting) score += 1;\n\n// Penalizaciones\nif (esTecnicoNoPrioritario) score -= 6;\n\n// V1.1\nif (funcionMLDataScience) score -= 6;\n\n// =====================================\n// 12. LÓGICA DE RELEVANCIA\n// =====================================\n\n// Caso A:\n// título inequívocamente Data / BI\nconst rolObjetivoDirecto =\n  coincidenciasTitulo.length > 0;\n\n// Caso B:\n// título ambiguo + evidencia Data suficiente\nconst rolAmbiguoConData =\n  esTituloAmbiguo &&\n  pilares >= 2 &&\n  (\n    tieneHerramientasData ||\n    tieneAnalisis\n  );\n\n// Caso C:\n// título no previsto pero descripción\n// claramente orientada a Analytics\nconst rolDataPorContenido =\n  coincidenciasTitulo.length === 0 &&\n  !esTituloAmbiguo &&\n  pilares >= 3 &&\n  tieneHerramientasData &&\n  (\n    tieneAnalisis ||\n    tieneReporting\n  );\n\n// =====================================\n// 12.1 V1.1 — ROL HÍBRIDO DATA + AUTOMATION\n// =====================================\n\n// Recupera perfiles como:\n// Business Analyst / Analista Funcional\n// con una combinación real de Data +\n// automatización + negocio/procesos.\n//\n// No basta con que aparezca \"automation\".\n\nconst rolHibridoDataAutomation =\n  esTituloAmbiguo &&\n  tieneAutomatizacion &&\n  (\n    tieneHerramientasData ||\n    tienePreparacionDatos ||\n    tieneAnalisis\n  ) &&\n  tieneNegocio;\n\nconst encajaTematicamente =\n  rolObjetivoDirecto ||\n  rolAmbiguoConData ||\n  rolDataPorContenido ||\n  rolHibridoDataAutomation;\n\n// =====================================\n// 13. DECISIÓN FINAL\n// =====================================\n\nconst relevante =\n  encajaTematicamente &&\n  !esTecnicoNoPrioritario &&\n  !funcionMLDataScience &&\n  score >= 5;\n\n// =====================================\n// 14. SALIDA\n// =====================================\n\nreturn {\n  json: {\n    ...job,\n\n    prefiltro: {\n      version: 'Data Relevance Filter V1.1',\n\n      relevante,\n      score,\n      pilares_detectados: pilares,\n\n      tipo_match: {\n        rol_objetivo_directo: rolObjetivoDirecto,\n        rol_ambiguo_con_data: rolAmbiguoConData,\n        rol_data_por_contenido: rolDataPorContenido,\n        rol_hibrido_data_automation: rolHibridoDataAutomation\n      },\n\n      coincidencias_titulo: coincidenciasTitulo,\n      coincidencias_titulo_ambiguo: coincidenciasTituloAmbiguo,\n\n      categorias: {\n        herramientas_data: tieneHerramientasData,\n        analisis: tieneAnalisis,\n        reporting_bi: tieneReporting,\n        preparacion_datos: tienePreparacionDatos,\n        negocio_operaciones: tieneNegocio,\n        automatizacion: tieneAutomatizacion,\n        tecnico_no_prioritario: esTecnicoNoPrioritario,\n        funcion_ml_data_science: funcionMLDataScience\n      },\n\n      bloqueos: {\n        tecnico_no_prioritario: esTecnicoNoPrioritario,\n        funcion_ml_data_science: funcionMLDataScience\n      },\n\n      coincidencias: {\n        herramientas_data: coincidenciasHerramientas,\n        analisis: coincidenciasAnalisis,\n        reporting_bi: coincidenciasReporting,\n        preparacion_datos: coincidenciasPreparacionDatos,\n        negocio_operaciones: coincidenciasNegocio,\n        automatizacion: coincidenciasAutomatizacion,\n        tecnico_titulo: coincidenciasTecnicas,\n        ml_data_science_funcion: coincidenciasMLDataScience\n      }\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        80
+      ],
+      "id": "a336885b-f6f1-4f6a-beea-0ed7d2c66f58",
+      "name": "Filtrar Vacantes Relevantes"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=VACANTE A ANALIZAR:\n\nPuesto:\n{{ $json.puesto }}\n\nEmpresa:\n{{ $json.empresa }}\n\nUbicación:\n{{ $json.ubicacion }}\n\nFecha de publicación:\n{{ $json.fecha_publicacion }}\n\nTipo de jornada:\n{{ $json.tipo_jornada }}\n\nSalario informado:\n{{ $json.salario_texto }}\n\nPortal / vía:\n{{ $json.via }}\n\nDescripción completa:\n{{ $json.descripcion }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Eres un analista especializado en reclutamiento, análisis de vacantes y extracción estructurada de información laboral, con enfoque en puestos de Data Analytics, Business Intelligence, Business Analytics, Operations Analytics y roles híbridos de datos y automatización.\n\nTu tarea es analizar una descripción de empleo y convertirla en información estructurada.\n\nTu función en esta etapa es EXCLUSIVAMENTE extraer y clasificar información de la vacante.\n\nNO evalúes la compatibilidad de la vacante con ningún candidato.\n\nREGLAS GENERALES:\n\n1. Utiliza únicamente información presente en la vacante.\n\n2. No inventes, completes ni supongas datos que no estén presentes.\n\n3. Devuelve siempre todos los campos definidos en el formato de salida.\n\n4. Si una propiedad textual no puede determinarse, devuelve \"No especificado\".\n\n5. Si una lista no tiene información, devuelve [].\n\n6. Si salario_min o salario_max no aparecen, devuelve 0.\n\n7. Para anos_experiencia:\n   - Devuelve únicamente un número.\n   - Representa los años mínimos de experiencia requeridos por la vacante.\n   - Si la vacante indica \"+5 años\", \"5+ años\", \"mínimo 5 años\" o \"más de 5 años\", devuelve 5.\n   - Si indica un rango como \"3 a 5 años\", \"3-5 años\" o \"entre 3 y 5 años\", devuelve el valor mínimo: 3.\n   - Si indica 6 meses, devuelve 0.5.\n   - Si indica 18 meses, devuelve 1.5.\n   - Si no especifica una cantidad concreta de años de experiencia, devuelve 0.\n   - No incluyas palabras como \"años\", símbolos \"+\", rangos ni explicaciones.\n\n8. Separa requisitos obligatorios de requisitos deseables únicamente cuando la descripción permita distinguirlos.\n\n9. No conviertas automáticamente una habilidad, herramienta o tecnología en requisito obligatorio simplemente porque aparezca mencionada.\n\nCLASIFICACIÓN DE TECNOLOGÍAS Y CAPACIDADES:\n\n10. Clasifica las tecnologías y capacidades mencionadas utilizando las siguientes categorías.\n\nlenguajes:\nIncluye lenguajes utilizados para programación, scripting o análisis de datos.\n\nEjemplos:\n- Python\n- R\n- Java\n- JavaScript\n\nSQL debe clasificarse en \"lenguajes\" cuando la vacante lo mencione como lenguaje o habilidad para consultas y análisis de datos.\n\nbases_datos:\nIncluye motores, plataformas o tecnologías utilizadas principalmente para almacenamiento, consulta o procesamiento estructurado de datos.\n\nEjemplos:\n- PostgreSQL\n- MySQL\n- SQL Server\n- Oracle\n- BigQuery\n- Snowflake\n- Redshift\n\nNo incluyas automáticamente \"SQL\" en bases_datos si la vacante únicamente menciona SQL como habilidad o lenguaje.\n\nherramientas_bi:\nIncluye plataformas cuya función principal en la vacante sea Business Intelligence, reporting, dashboards o visualización de datos.\n\nEjemplos:\n- Power BI\n- Tableau\n- Looker\n- Looker Studio\n- Qlik\n\ncompetencias_data:\nIncluye técnicas, procesos y capacidades de trabajo con datos que no sean simplemente nombres de herramientas.\n\nEjemplos:\n- Data Cleaning\n- Data Transformation\n- ETL\n- Data Modeling\n- Data Visualization\n- Statistical Analysis\n- Exploratory Data Analysis\n- KPI Analysis\n- Reporting\n- Dashboard Development\n- Data Quality\n- Data Governance\n\nIncluye una competencia únicamente cuando esté explícitamente presente o claramente descrita como una responsabilidad o conocimiento requerido.\n\nherramientas:\nIncluye las demás herramientas, plataformas y tecnologías relevantes mencionadas en la vacante que no correspondan mejor a las categorías anteriores.\n\nEjemplos:\n- Excel\n- Power Query\n- Power Automate\n- Power Apps\n- Alteryx\n- Git\n- Jira\n- SAP\n- Google Sheets\n- Azure\n- AWS\n- GCP\n\nEvita duplicar innecesariamente una misma tecnología entre categorías.\n\nIMPORTANTE PARA competencias_data:\n\nPuedes normalizar una actividad descrita explícitamente a un nombre técnico estándar\nsolo cuando exista equivalencia funcional clara.\n\nEjemplos:\n- \"crear tableros\" puede normalizarse como \"Dashboard Development\";\n- \"visualización de información\" puede normalizarse como \"Data Visualization\";\n- \"analizar indicadores de desempeño\" puede normalizarse como \"KPI Analysis\".\n\nNo infieras procesos técnicos específicos que la vacante no describa suficientemente.\n\nPor ejemplo:\n- no clasifiques automáticamente \"integrar información\" como ETL;\n- no clasifiques automáticamente \"manejar información\" como Data Quality;\n- no clasifiques automáticamente \"analizar información\" como Statistical Analysis;\n- no clasifiques automáticamente \"automatizar reportes\" como Data Engineering.\n\nCuando exista duda, omite la competencia.\n\nREGLAS PARA FORMACIÓN ACADÉMICA:\n\n11. Cuando la vacante mencione licenciatura, ingeniería, carrera universitaria, título, cédula u otra formación académica, distingue cuidadosamente entre requisito obligatorio, deseable y excluyente.\n\nClasifica como requisito_deseable cuando la vacante utilice expresiones como:\n- deseable\n- preferentemente\n- de preferencia\n- idealmente\n- se valorará\n- plus\n- carrera afín, cuando no exista lenguaje de obligatoriedad\n- formación relacionada, cuando no exista lenguaje de obligatoriedad\n\nClasifica como requisito_obligatorio cuando la vacante establezca claramente que la formación es requerida, por ejemplo:\n- requisito\n- requerido\n- obligatorio\n- indispensable\n- licenciatura concluida\n- título requerido\n- titulado\n- cédula requerida\n- contar con licenciatura\n\nLa clasificación como requisito_obligatorio NO implica automáticamente que sea requisito_excluyente.\n\nClasifica además como requisito_excluyente únicamente cuando la redacción deje claro que no cumplir el requisito académico hace objetivamente improcedente la candidatura, por ejemplo:\n- título profesional obligatorio\n- cédula profesional obligatoria\n- únicamente titulados\n- indispensable estar titulado\n- certificación o licencia obligatoria para ejercer el puesto\n\nLa simple mención de una carrera, licenciatura o ingeniería NO convierte automáticamente la formación académica en requisito excluyente.\n\nNo infieras obligatoriedad cuando la descripción sea ambigua.\n\nEn caso de ambigüedad, no la clasifiques como requisito_excluyente.\n\nREQUISITOS EXCLUYENTES:\n\n12. Identifica requisitos_excluyentes únicamente cuando la vacante establezca explícitamente una condición obligatoria de elegibilidad o contratación, por ejemplo:\n- ser estudiante activo o recién graduado;\n- contar obligatoriamente con una titulación, licencia o certificación específica;\n- dominio obligatorio de un idioma;\n- disponibilidad presencial o ubicación obligatoria;\n- permiso de trabajo u otra condición legal;\n- cualquier condición explícita cuya ausencia haga improcedente la candidatura.\n\nNo marques una tecnología como requisito excluyente solo porque sea obligatoria.\n\nLas tecnologías centrales del puesto deben registrarse en tecnologias_nucleo.\n\nTECNOLOGÍAS NÚCLEO:\n\n13. Identifica en tecnologias_nucleo únicamente las herramientas o tecnologías que constituyen el núcleo técnico del puesto.\n\nUna tecnología debe incluirse en tecnologias_nucleo únicamente cuando exista evidencia clara de que es esencial para realizar las funciones principales.\n\nNo incluyas automáticamente todas las tecnologías mencionadas.\n\nNo incluyas una tecnología en tecnologias_nucleo únicamente porque aparezca en una lista general de conocimientos.\n\nPrioriza tecnologías que:\n- aparezcan repetidamente en responsabilidades y requisitos;\n- sean explícitamente requeridas o indispensables;\n- definan directamente el tipo de puesto;\n- sean necesarias para ejecutar las funciones principales.\n\nEjemplos:\n\nEn una vacante de Data Analyst cuyas responsabilidades principales consisten en consultar datos con SQL y construir dashboards en Power BI, SQL y Power BI pueden ser tecnologias_nucleo.\n\nSi Python aparece únicamente como conocimiento deseable, no debe convertirse automáticamente en tecnologia_nucleo.\n\nEn un puesto de automatización basado principalmente en Power Platform, Power Automate y Power Apps pueden ser tecnologias_nucleo.\n\n14. seniority debe reflejar únicamente lo indicado o claramente identificable en la vacante.\n\nEjemplos:\n- Intern\n- Trainee\n- Junior\n- Mid\n- Senior\n- Lead\n- Manager\n\nSi no puede determinarse con suficiente evidencia, devuelve \"No especificado\".\n\n15. modalidad debe clasificarse únicamente con base en información presente en la vacante.\n\nValores esperados cuando puedan determinarse:\n- Remoto\n- Híbrido\n- Presencial\n\nSi no puede determinarse, devuelve \"No especificado\".\n\n16. ingles debe reflejar el nivel solicitado por la vacante.\n\nEjemplos:\n- Básico\n- Intermedio\n- Intermedio-avanzado\n- Avanzado\n- Bilingüe\n- No especificado\n\nNo infieras un nivel por el simple hecho de que la descripción esté escrita en inglés.\n\n17. responsabilidades debe contener las principales funciones reales del puesto, evitando copiar información promocional de la empresa o beneficios.\n\n18. resumen debe describir brevemente el objetivo profesional y técnico del puesto.\n\nNo evalúes al candidato en el resumen.\n\n19. No evalúes todavía:\n- compatibilidad con el candidato;\n- probabilidad de contratación;\n- conveniencia de postularse;\n- fortalezas o debilidades del candidato;\n- score de compatibilidad.\n\n20. Devuelve exclusivamente JSON válido.\n\n21. No agregues explicaciones antes ni después del JSON.\n\nDevuelve exactamente esta estructura:\n\n{\n  \"puesto\": null,\n  \"empresa\": null,\n  \"ubicacion\": null,\n  \"modalidad\": null,\n  \"salario_min\": 0,\n  \"salario_max\": 0,\n  \"moneda\": null,\n  \"periodicidad_salario\": null,\n  \"seniority\": null,\n  \"anos_experiencia\": 0,\n  \"ingles\": null,\n  \"lenguajes\": [],\n  \"bases_datos\": [],\n  \"herramientas_bi\": [],\n  \"herramientas\": [],\n  \"competencias_data\": [],\n  \"responsabilidades\": [],\n  \"requisitos_obligatorios\": [],\n  \"requisitos_deseables\": [],\n  \"requisitos_excluyentes\": [],\n  \"tecnologias_nucleo\": [],\n  \"resumen\": null\n}\n\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2384,
+        -144
+      ],
+      "id": "967aba23-dad3-45e8-a990-b0f3c5748db2",
+      "name": "Analizar Vacante con IA",
+      "retryOnFail": true,
+      "waitBetweenTries": 1500
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2448,
+        -432
+      ],
+      "id": "e34b6bc8-8592-46b7-be98-cafb89fbf2c3",
+      "name": "Procesar con OpenAI"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"puesto\": \"Data Analyst\",\n  \"empresa\": \"Empresa ejemplo\",\n  \"ubicacion\": \"Ciudad de México\",\n  \"modalidad\": \"Híbrido\",\n  \"salario_min\": 25000,\n  \"salario_max\": 35000,\n  \"moneda\": \"MXN\",\n  \"periodicidad_salario\": \"Mensual\",\n  \"seniority\": \"Mid\",\n  \"anos_experiencia\": 2,\n  \"ingles\": \"Intermedio\",\n  \"lenguajes\": [\n    \"SQL\",\n    \"Python\"\n  ],\n  \"bases_datos\": [\n    \"PostgreSQL\"\n  ],\n  \"herramientas_bi\": [\n    \"Power BI\"\n  ],\n  \"herramientas\": [\n    \"Excel\",\n    \"Power Query\"\n  ],\n  \"competencias_data\": [\n    \"Data Cleaning\",\n    \"Data Transformation\",\n    \"Data Visualization\",\n    \"KPI Analysis\"\n  ],\n  \"responsabilidades\": [\n    \"Analizar información operativa y comercial\",\n    \"Construir dashboards e indicadores de desempeño\",\n    \"Preparar y transformar datos para análisis\"\n  ],\n  \"requisitos_obligatorios\": [\n    \"Experiencia realizando análisis de datos\",\n    \"Conocimiento de SQL\"\n  ],\n  \"requisitos_deseables\": [\n    \"Experiencia con Python\"\n  ],\n  \"requisitos_excluyentes\": [],\n  \"tecnologias_nucleo\": [\n    \"SQL\",\n    \"Power BI\"\n  ],\n  \"resumen\": \"Posición enfocada en análisis de datos, generación de indicadores y desarrollo de dashboards para apoyar la toma de decisiones.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2448,
+        208
+      ],
+      "id": "6f3780bc-63ad-475a-b0bb-20c5b01fab6a",
+      "name": "Estructurar Datos de Vacante"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEETS_DOCUMENT_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "VACANTES"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "job_id": "={{ $json.job_id }}",
+            "job_hash": "={{ $json.job_hash }}",
+            "fecha_descubrimiento": "={{ $now.setZone('America/Mexico_City').toISO() }}",
+            "portal": "={{ $json.via }}",
+            "puesto": "={{ $json.puesto }}",
+            "empresa": "={{ $json.empresa }}",
+            "url": "={{ $json.url }}",
+            "ubicacion": "={{ $json.ubicacion }}",
+            "modalidad": "={{ $json.modalidad }}",
+            "salario_min": "={{ $json.salario_min }}",
+            "salario_max": "={{ $json.salario_max }}",
+            "moneda": "={{ $json.moneda }}",
+            "periodicidad_salario": "={{ $json.periodicidad_salario }}",
+            "seniority": "={{ $json.seniority }}",
+            "anos_experiencia": "={{ $('Analizar Vacante con IA').item.json.output.anos_experiencia }}",
+            "ingles": "={{ $json.ingles }}",
+            "descripcion": "={{ $json.descripcion }}",
+            "resumen_ia": "={{ $json.resumen_ia }}",
+            "responsabilidades": "={{ $json.responsabilidades }}",
+            "requisitos_obligatorios": "={{ $json.requisitos_obligatorios }}",
+            "herramientas": "={{ $json.herramientas }}",
+            "requisitos_deseables": "={{ $json.requisitos_deseables }}",
+            "compatibilidad": "={{ $json.compatibilidad }}",
+            "fortalezas": "={{ $json.fortalezas }}",
+            "habilidades_faltantes": "={{ $json.habilidades_faltantes }}",
+            "recomendacion": "={{ $json.recomendacion }}",
+            "motivo_recomendacion": "={{ $json.motivo_recomendacion }}",
+            "estatus": "={{ \n  $json.recomendacion === 'Aplicar' \n    ? 'Aplicar' \n    : $json.recomendacion === 'Revisar'\n      ? 'Revisar'\n      : 'Descartada'\n}}",
+            "score_detalle": "={{ $('Integrar Scoring en Vacante').item.json.score_detalle }}",
+            "source_job_id": "={{ $json.source_job_id }}",
+            "fuente": "={{ $json.fuente }}",
+            "fecha_publicacion": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.fecha_publicacion }}",
+            "url_aplicar": "={{ $json.url_aplicar }}",
+            "via": "={{ $json.via }}",
+            "tipo_jornada": "={{ $json.tipo_jornada }}",
+            "fecha_actualizacion": "={{ $now.setZone('America/Mexico_City').toISO() }}",
+            "execution_id": "={{ $json.execution_id }}",
+            "query_origen": "={{ $json.query_origen || '' }}",
+            "lenguajes": "={{ $json.lenguajes || '[]' }}",
+            "bases_datos": "={{ $json.bases_datos || '[]' }}",
+            "herramientas_bi": "={{ $json.herramientas_bi || '[]' }}",
+            "competencias_data": "={{ $json.competencias_data || '[]' }}",
+            "tecnologias_nucleo": "={{ $json.tecnologias_nucleo || '[]' }}",
+            "score_base": "={{ $json.score_base ?? 0 }}",
+            "penalizacion": "={{ $json.penalizacion ?? 0 }}",
+            "requisitos_criticos_faltantes": "={{ $json.requisitos_criticos_faltantes || '[]' }}",
+            "tecnologias_nucleo_faltantes": "={{ $json.tecnologias_nucleo_faltantes || '[]' }}",
+            "tiene_requisito_excluyente": "={{ $json.tiene_requisito_excluyente ?? 'false' }}",
+            "motivo_requisito_excluyente": "={{ $json.motivo_requisito_excluyente || '' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "job_id",
+              "displayName": "job_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_job_id",
+              "displayName": "source_job_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fuente",
+              "displayName": "fuente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "job_hash",
+              "displayName": "job_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha_descubrimiento",
+              "displayName": "fecha_descubrimiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha_publicacion",
+              "displayName": "fecha_publicacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "portal",
+              "displayName": "portal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "puesto",
+              "displayName": "puesto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "url_aplicar",
+              "displayName": "url_aplicar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "via",
+              "displayName": "via",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ubicacion",
+              "displayName": "ubicacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "modalidad",
+              "displayName": "modalidad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tipo_jornada",
+              "displayName": "tipo_jornada",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "salario_min",
+              "displayName": "salario_min",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "salario_max",
+              "displayName": "salario_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "moneda",
+              "displayName": "moneda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "periodicidad_salario",
+              "displayName": "periodicidad_salario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "seniority",
+              "displayName": "seniority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "anos_experiencia",
+              "displayName": "anos_experiencia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ingles",
+              "displayName": "ingles",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumen_ia",
+              "displayName": "resumen_ia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "responsabilidades",
+              "displayName": "responsabilidades",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "requisitos_obligatorios",
+              "displayName": "requisitos_obligatorios",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "requisitos_deseables",
+              "displayName": "requisitos_deseables",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "herramientas",
+              "displayName": "herramientas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "compatibilidad",
+              "displayName": "compatibilidad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fortalezas",
+              "displayName": "fortalezas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "habilidades_faltantes",
+              "displayName": "habilidades_faltantes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recomendacion",
+              "displayName": "recomendacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "motivo_recomendacion",
+              "displayName": "motivo_recomendacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score_detalle",
+              "displayName": "score_detalle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estatus",
+              "displayName": "estatus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha_aplicacion",
+              "displayName": "fecha_aplicacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "notas",
+              "displayName": "notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha_actualizacion",
+              "displayName": "fecha_actualizacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "comentarios",
+              "displayName": "comentarios",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "query_origen",
+              "displayName": "query_origen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lenguajes",
+              "displayName": "lenguajes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bases_datos",
+              "displayName": "bases_datos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "herramientas_bi",
+              "displayName": "herramientas_bi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "competencias_data",
+              "displayName": "competencias_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tecnologias_nucleo",
+              "displayName": "tecnologias_nucleo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score_base",
+              "displayName": "score_base",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "penalizacion",
+              "displayName": "penalizacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "requisitos_criticos_faltantes",
+              "displayName": "requisitos_criticos_faltantes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tecnologias_nucleo_faltantes",
+              "displayName": "tecnologias_nucleo_faltantes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tiene_requisito_excluyente",
+              "displayName": "tiene_requisito_excluyente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "motivo_requisito_excluyente",
+              "displayName": "motivo_requisito_excluyente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4400,
+        496
+      ],
+      "id": "32fc07a8-1fb4-465a-bd8d-da504d1411a7",
+      "name": "Guardar Vacante en CRM"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEETS_DOCUMENT_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 772897851,
+          "mode": "list",
+          "cachedResultName": "PERFIL_CANDIDATO"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3008,
+        -336
+      ],
+      "id": "c8528547-383d-4c4c-93ff-32f189b73d83",
+      "name": "Leer Perfil Candidato",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const perfil = {};\n\nfor (const item of items) {\n  const campo = item.json.campo;\n  const valor = item.json.valor;\n\n  if (!campo) continue;\n\n  perfil[campo] = valor ?? '';\n}\n\nreturn [\n  {\n    json: perfil\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3024,
+        272
+      ],
+      "id": "5178dc80-62f3-4887-898d-62c0953907a9",
+      "name": "Estructurar Perfil Candidato"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=PERFIL DEL CANDIDATO:\n{{ JSON.stringify($('Estructurar Perfil Candidato').item.json) }}\n\n\nVACANTE A EVALUAR:\n{{ JSON.stringify($('Analizar Vacante con IA').item.json.output) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Eres un evaluador de compatibilidad profesional especializado en puestos de análisis de datos, Business Intelligence, Business Analytics, Operations Analytics, automatización aplicada a datos y funciones analíticas relacionadas.\n\nTu tarea es comparar objetivamente el PERFIL DEL CANDIDATO contra la VACANTE A EVALUAR.\n\nTu análisis debe basarse exclusivamente en la evidencia disponible en ambos objetos.\n\nIMPORTANTE:\nNo calcules porcentajes.\nNo calcules puntos.\nNo generes un score numérico de compatibilidad.\nNo determines si el candidato debe aplicar, revisar o descartar la vacante.\nLa recomendación final será calculada posteriormente mediante reglas deterministas.\n\nTu función es CLASIFICAR las dimensiones solicitadas e identificar coincidencias y brechas.\n\n==================================================\nPRINCIPIOS GENERALES DE EVALUACIÓN\n==================================================\n\n1. Diferencia experiencia profesional, experiencia analítica y experiencia técnica.\n\nLos años totales de experiencia profesional del candidato NO equivalen automáticamente a años de experiencia como Data Analyst, BI Analyst, SQL Developer, Data Engineer u otro puesto técnico.\n\nEjemplo:\n8 años de experiencia profesional en operaciones, Customer Operations, análisis de métricas y procesos no deben interpretarse automáticamente como 8 años de experiencia profesional en Data Analytics.\n\nSin embargo, la experiencia previa en análisis operativo, KPIs, reporting, identificación de patrones, procesos y toma de decisiones sí puede considerarse experiencia relacionada cuando las funciones de la vacante sean similares.\n\n2. Los proyectos constituyen evidencia práctica.\n\nLos proyectos del candidato pueden demostrar experiencia práctica con herramientas, metodologías y procesos.\n\nSin embargo:\n- un proyecto no equivale automáticamente a experiencia laboral profesional;\n- no conviertas la duración de la trayectoria profesional total en años de experiencia técnica;\n- considera el proyecto como evidencia válida de capacidad cuando la vacante no exija explícitamente años profesionales utilizando esa tecnología.\n\n3. Diferencia los niveles declarados de herramientas.\n\nEl perfil puede clasificar herramientas como:\n- herramientas_dominadas\n- herramientas_intermedias\n- herramientas_aprendiendo\n\nInterpreta estos niveles de forma distinta.\n\nUna herramienta intermedia representa capacidad práctica demostrable para casos habituales, especialmente cuando existe evidencia adicional en el CV o proyectos.\n\nNo significa automáticamente dominio avanzado ni experiencia profesional prolongada.\n\nUna herramienta en aprendizaje puede constituir conocimiento parcial, pero no debe considerarse dominio.\n\n4. Evalúa el nivel exigido por la vacante.\n\nNo evalúes una tecnología únicamente por coincidencia de nombre.\n\nEjemplo:\nSi el candidato demuestra SQL mediante consultas, filtros, agregaciones y proyectos, esto puede cubrir una vacante que solicite SQL para análisis de datos.\n\nPero no debe considerarse automáticamente suficiente para una vacante que exija varios años de SQL avanzado, optimización de queries, stored procedures, administración de bases de datos o responsabilidades equivalentes.\n\nAplica el mismo criterio a Python, PostgreSQL, Power BI y cualquier otra tecnología.\n\n5. Diferencia obligatorio, núcleo y deseable.\n\nUtiliza:\n- requisitos_obligatorios\n- requisitos_deseables\n- requisitos_excluyentes\n- tecnologias_nucleo\n\nNo penalices como requisito crítico una herramienta o habilidad que la vacante clasifique únicamente como deseable, preferente, plus, ventaja o similar.\n\n==================================================\n1. EXPERIENCIA_RELACIONADA\n==================================================\n\nCompara la experiencia profesional y los proyectos del candidato con la experiencia solicitada por la vacante.\n\nConsidera especialmente:\n- análisis de datos;\n- análisis de métricas y KPIs;\n- reporting;\n- Business Intelligence;\n- análisis operativo;\n- análisis de negocio;\n- identificación de patrones;\n- mejora de procesos;\n- trabajo con stakeholders;\n- limpieza, transformación y validación de información;\n- proyectos analíticos relevantes.\n\nNo confundas experiencia transferible con experiencia idéntica.\n\nLa experiencia en operaciones puede tener alta relevancia para Operations Analytics o Business Analytics cuando las responsabilidades coincidan, pero no debe convertirse artificialmente en experiencia profesional como Data Analyst.\n\nValores permitidos:\n- alta\n- media_alta\n- media\n- baja\n- nula\n\n==================================================\n2. HERRAMIENTAS_TECNOLOGIAS\n==================================================\n\nCompara las capacidades técnicas requeridas por la vacante contra la evidencia del candidato.\n\nUtiliza especialmente estos campos de la vacante cuando estén disponibles:\n- lenguajes\n- bases_datos\n- herramientas_bi\n- herramientas\n- competencias_data\n- tecnologias_nucleo\n\nDa prioridad a tecnologias_nucleo.\n\nLas tecnologías núcleo representan capacidades necesarias para realizar las funciones principales del puesto y deben pesar más que tecnologías secundarias o deseables.\n\nEvalúa tanto cobertura como nivel requerido.\n\nReglas:\n\n- Si el candidato demuestra capacidad suficiente en la mayoría o totalidad de las tecnologías núcleo, herramientas_tecnologias puede ser alta o media_alta.\n\n- Si demuestra solamente una parte relevante de las tecnologías núcleo, utiliza media o baja según la cobertura y el nivel exigido.\n\n- Si no demuestra capacidad suficiente con la mayoría de las tecnologías núcleo, no clasifiques herramientas_tecnologias como alta ni media_alta.\n\n- Una tecnología similar o transferible no equivale automáticamente a la solicitada.\n\nEjemplos:\nPostgreSQL no demuestra automáticamente experiencia con SQL Server.\nPower BI no equivale automáticamente a Tableau.\nn8n no equivale automáticamente a Power Automate.\nPython no equivale automáticamente a PySpark.\n\n- Considera herramientas intermedias como evidencia práctica cuando el nivel requerido sea compatible con las capacidades demostradas.\n\n- Si la vacante exige dominio avanzado, varios años profesionales o responsabilidades técnicas complejas con una herramienta que el candidato solo demuestra a nivel intermedio/proyecto, clasifica la cobertura como parcial.\n\n- Una herramienta en aprendizaje no se considera dominada.\n\n- Las competencias_data deben compararse contra las actividades realmente demostradas en el perfil y CV, no solamente por similitud terminológica.\n\nValores permitidos:\n- alta\n- media_alta\n- media\n- baja\n- nula\n\n==================================================\n3. RESPONSABILIDADES\n==================================================\n\nEvalúa cuánto se parecen las responsabilidades profesionales y proyectos del candidato a las funciones reales del puesto.\n\nPrioriza similitud funcional sobre coincidencia de títulos.\n\nEjemplos de áreas relevantes:\n- análisis de información;\n- generación de reportes;\n- dashboards;\n- KPIs;\n- análisis operativo;\n- análisis de negocio;\n- identificación de patrones;\n- transformación de datos;\n- automatización de procesos de datos;\n- comunicación de hallazgos;\n- mejora de procesos;\n- trabajo con stakeholders.\n\nNo supongas responsabilidades que el candidato no haya demostrado.\n\nValores permitidos:\n- alta\n- media_alta\n- media\n- baja\n- nula\n\n==================================================\n4. INDUSTRIA_CONTEXTO\n==================================================\n\nEvalúa la experiencia del candidato en industrias o contextos relevantes para la vacante.\n\nConsidera tanto industria como contexto funcional.\n\nEjemplos de contexto:\nSaaS B2B, ERP, Customer Operations, Customer Experience, operaciones, procesos, tecnología, análisis de negocio.\n\nNo penalices excesivamente una industria diferente cuando las responsabilidades y capacidades sean claramente transferibles, salvo que la vacante requiera conocimiento sectorial específico.\n\nValores permitidos:\n- alta\n- media_alta\n- media\n- baja\n- nula\n\n==================================================\n5. SENIORITY\n==================================================\n\nCompara el nivel solicitado con la evidencia del perfil.\n\nConsidera:\n- años específicamente relevantes;\n- complejidad de responsabilidades;\n- autonomía;\n- liderazgo;\n- nivel técnico requerido;\n- seniority explícito de la vacante.\n\nNO utilices experiencia_total como si representara automáticamente años de experiencia Data.\n\nNo infieras automáticamente Junior, Mid, Senior o Lead únicamente a partir de años totales.\n\nSi la vacante exige, por ejemplo, varios años profesionales específicamente como Data Analyst o utilizando una tecnología y el candidato demuestra principalmente proyectos o experiencia transferible, refleja esa diferencia.\n\nValores permitidos:\n- compatible\n- parcial\n- no_compatible\n\n==================================================\n6. IDIOMA\n==================================================\n\nCompara el requisito explícito de idioma con el nivel declarado por el candidato.\n\nSi la vacante no especifica requisito de idioma:\ncompatible\n\nNo infieras un requisito de inglés únicamente porque la descripción esté escrita en inglés.\n\nValores permitidos:\n- compatible\n- parcial\n- no_compatible\n\n==================================================\n7. MODALIDAD_UBICACION\n==================================================\n\nCompara ubicación y modalidad de la vacante con:\n- ubicacion\n- modalidad_preferida\n- restricciones\ndel candidato.\n\nEvalúa únicamente con la evidencia disponible en la vacante y en el perfil.\n\nDistingue entre:\n- modalidad y ubicación compatibles;\n- ubicación o modalidad insuficientemente especificada;\n- incompatibilidad geográfica explícita.\n\nREGLAS:\n\n1. Si la vacante es presencial y la ubicación de trabajo está fuera de las ubicaciones permitidas por las restricciones del candidato, clasifica:\n   modalidad_ubicacion = \"no_compatible\"\n\n2. Si la vacante es híbrida y requiere asistencia presencial en una ubicación fuera de las ubicaciones permitidas por las restricciones del candidato, clasifica:\n   modalidad_ubicacion = \"no_compatible\"\n\n3. No supongas que el candidato puede reubicarse, viajar regularmente o cambiar de residencia si el perfil no lo indica.\n\n4. Si la vacante permite trabajo remoto desde una ubicación compatible con las restricciones del candidato, la ubicación de la empresa por sí sola no constituye incompatibilidad.\n\n5. Si la ubicación está fuera de las ubicaciones permitidas por el candidato, pero la modalidad no está especificada o no existe evidencia suficiente de que requiera presencia física en esa ubicación, no asumas incompatibilidad explícita. Clasifica:\n   modalidad_ubicacion = \"parcial\"\n\n6. Si ubicación y modalidad son compatibles con las restricciones del candidato, clasifica:\n   modalidad_ubicacion = \"compatible\"\n\n7. Usa \"parcial\" para incertidumbre o información insuficiente. No uses \"parcial\" cuando exista evidencia explícita de que la vacante requiere presencia física en una ubicación incompatible con las restricciones del candidato.\n\nValores permitidos:\n- compatible\n- parcial\n- no_compatible\n\n==================================================\n8. SALARIO\n==================================================\n\nCompara salario_min y salario_max de la vacante con salario_minimo del candidato.\n\nSi la vacante publica un rango y al menos parte del rango satisface el mínimo del candidato, puede considerarse compatible.\n\nSi todo el rango publicado está por debajo del mínimo:\nno_compatible\n\nSi la vacante no especifica salario:\nparcial\n\nNo inventes moneda ni conviertas monedas si no existe información suficiente.\n\nValores permitidos:\n- compatible\n- parcial\n- no_compatible\n\n==================================================\nFORTALEZAS\n==================================================\n\nIdentifica únicamente fortalezas:\n- demostradas en el perfil o CV;\n- relevantes para esta vacante;\n- respaldadas por experiencia profesional o proyectos.\n\nNo inventes capacidades.\n\n==================================================\nHABILIDADES_FALTANTES\n==================================================\n\nIdentifica habilidades, herramientas, conocimientos o experiencia solicitados por la vacante que:\n- no estén demostrados; o\n- estén demostrados a un nivel inferior al requerido.\n\nPuedes incluir diferencias deseables relevantes aquí, pero no las conviertas por ello en requisitos críticos.\n\n==================================================\nMOTIVO_RECOMENDACION\n==================================================\n\nRedacta una explicación breve y objetiva de los principales factores a favor y en contra.\n\nDistingue cuando corresponda entre:\n- experiencia profesional;\n- experiencia transferible;\n- evidencia mediante proyectos;\n- brechas técnicas;\n- requisitos obligatorios;\n- ubicación/modalidad.\n\nNo indiques \"Aplicar\", \"Revisar\" o \"Descartar\".\nNo incluyas scores, puntos ni porcentajes.\n\n==================================================\nREQUISITOS_CRITICOS_FALTANTES\n==================================================\n\nUtiliza principalmente requisitos_obligatorios de la vacante.\n\nIncluye únicamente requisitos que:\n\n1. sean obligatorios o claramente requeridos; y\n2. el candidato no demuestre cumplir suficientemente.\n\nNo incluyas automáticamente todas las habilidades faltantes.\n\nNo incluyas requisitos deseables, preferentes, plus o similares.\n\nLas tecnologías núcleo faltantes deben registrarse principalmente en tecnologias_nucleo_faltantes.\n\nNo dupliques una tecnología en requisitos_criticos_faltantes salvo que la vacante la establezca además explícitamente como requisito obligatorio.\n\nSi la vacante exige años profesionales específicos utilizando una herramienta o desempeñando una función y esa experiencia no está demostrada, puede considerarse requisito crítico faltante cuando esté claramente formulado como obligatorio.\n\n==================================================\nTECNOLOGIAS_NUCLEO_FALTANTES\n==================================================\n\nRevisa exclusivamente tecnologias_nucleo.\n\nDevuelve las tecnologías núcleo cuyo nivel requerido no esté suficientemente demostrado.\n\nNo determines cobertura únicamente por coincidencia de nombre.\n\nEjemplo:\nSi SQL aparece como tecnología núcleo y el candidato demuestra SQL intermedio mediante consultas y proyectos, puede considerarse cubierto para una vacante analítica estándar.\n\nSi la misma vacante exige SQL avanzado y varios años profesionales, esa evidencia puede no ser suficiente.\n\nNo consideres una tecnología cubierta únicamente porque exista una herramienta similar.\n\nREGLA PARA TECNOLOGÍAS ALTERNATIVAS:\n\nAntes de determinar tecnologias_nucleo_faltantes, identifica si la vacante presenta varias tecnologías como alternativas para satisfacer una misma capacidad.\n\nExpresiones como:\n- \"X or Y\";\n- \"X, Y or Z\";\n- \"X / Y\";\n- \"such as X, Y, Z or similar\";\n- \"por ejemplo X, Y o similares\";\n- \"una herramienta como X, Y o Z\";\n- u otras formulaciones equivalentes;\n\nNO significan automáticamente que el candidato deba dominar todas las tecnologías mencionadas.\n\nCuando varias tecnologías sean alternativas para satisfacer una misma capacidad, evalúa el requisito como un GRUPO ALTERNATIVO.\n\nSi el candidato demuestra suficientemente al menos una de las alternativas aceptadas al nivel requerido, considera cubierta esa capacidad y NO incluyas las demás alternativas en tecnologias_nucleo_faltantes únicamente por no estar demostradas.\n\nEjemplo:\n\nVacante:\n\"4 years of experience using SQL and data visualization tools such as Looker, Tableau, Power BI, Qlik, or similar.\"\n\nInterpretación:\n- SQL es una capacidad requerida.\n- Se requiere experiencia con herramientas de visualización.\n- Looker, Tableau, Power BI y Qlik son ejemplos o alternativas dentro de esa capacidad.\n\nSi el candidato demuestra Power BI al nivel requerido, no registres Looker, Tableau y Qlik individualmente como tecnologías núcleo faltantes.\n\nIMPORTANTE:\nCubrir una alternativa tecnológica NO implica automáticamente cumplir requisitos adicionales asociados a ella.\n\nPor ejemplo, si la vacante exige además 4 años profesionales utilizando SQL y herramientas de visualización, el candidato puede demostrar una herramienta válida como Power BI pero seguir incumpliendo el requisito de años de experiencia.\n\nEn ese caso:\n- NO registres las otras herramientas alternativas como tecnologias_nucleo_faltantes;\n- SÍ puedes registrar la insuficiencia de años o nivel en requisitos_criticos_faltantes cuando sea un requisito obligatorio.\n\nSi todas están suficientemente cubiertas:\n[]\n\n==================================================\nTIENE_REQUISITO_EXCLUYENTE\n==================================================\n\nUtiliza principalmente requisitos_excluyentes.\n\nDevuelve true únicamente cuando:\n\n1. la vacante establece explícitamente una condición obligatoria o excluyente; y\n2. el perfil demuestra que el candidato no la cumple.\n\nEjemplos:\n- condición legal obligatoria;\n- licencia/certificación indispensable;\n- condición académica explícitamente indispensable;\n- residencia obligatoria incompatible;\n- modalidad presencial obligatoria incompatible cuando el candidato no puede cumplirla según la información disponible.\n\nIMPORTANTE:\nLa falta de información NO demuestra automáticamente incumplimiento.\n\nSi no existe evidencia suficiente para afirmar que el candidato incumple una condición, no establezcas true únicamente por incertidumbre.\n\nNo conviertas automáticamente una tecnología faltante en requisito excluyente.\n\nREGLA PARA IDIOMAS OBLIGATORIOS:\n\nUn requisito de idioma puede constituir una condición excluyente cuando:\n\n1. la vacante exige explícitamente un nivel concreto como requisito obligatorio para desempeñar el puesto; y\n2. el perfil demuestra explícitamente un nivel sustancialmente inferior.\n\nEjemplos:\n\nVacante:\n\"Full professional proficiency in English required.\"\n\nCandidato:\n\"Inglés básico-intermedio.\"\n\nResultado:\n- idioma = no_compatible\n- puede establecerse tiene_requisito_excluyente = true\n\nVacante:\n\"Advanced English required.\"\n\nCandidato:\n\"Inglés básico.\"\n\nResultado:\n- idioma = no_compatible\n- puede establecerse tiene_requisito_excluyente = true\n\nVacante:\n\"English preferred\" o \"English desirable.\"\n\nCandidato:\n\"Inglés básico-intermedio.\"\n\nResultado:\n- NO actives tiene_requisito_excluyente únicamente por el idioma.\n\nVacante:\n\"Advanced English required.\"\n\nCandidato:\nnivel de inglés no especificado.\n\nResultado:\n- NO actives tiene_requisito_excluyente únicamente por ausencia de información.\n\nNo conviertas automáticamente cualquier diferencia de nivel de idioma en requisito excluyente.\n\nSi la diferencia es menor o existe evidencia razonable de cobertura parcial, utiliza idioma = parcial y conserva tiene_requisito_excluyente = false, salvo que la vacante establezca claramente una condición estricta de elegibilidad.\n\n==================================================\nREGLA ESPECIAL DE FORMACIÓN ACADÉMICA\n==================================================\n\nNo establezcas tiene_requisito_excluyente = true únicamente porque el candidato no cumpla una licenciatura, ingeniería o carrera mencionada.\n\nSi la formación es:\n- deseable;\n- preferente;\n- ideal;\n- plus;\n\ntrátala como diferencia no excluyente.\n\nSi aparece como requisito obligatorio, pero la vacante no establece claramente que sea condición indispensable de elegibilidad, puede incluirse en requisitos_criticos_faltantes sin activar automáticamente tiene_requisito_excluyente.\n\nUtiliza tiene_requisito_excluyente = true por formación únicamente cuando la vacante establezca claramente que la titulación, cédula, licencia o certificación es indispensable para la candidatura.\n\n==================================================\nMOTIVO_REQUISITO_EXCLUYENTE\n==================================================\n\nSi tiene_requisito_excluyente = true:\nexplica brevemente cuál condición explícita no cumple el candidato.\n\nSi tiene_requisito_excluyente = false:\ndevuelve una cadena vacía \"\".\n\nSi existen varios requisitos faltantes pero solo uno cumple las condiciones para ser considerado excluyente, menciona únicamente el requisito realmente excluyente en motivo_requisito_excluyente.\n\nNo agrupes requisitos críticos no excluyentes dentro de motivo_requisito_excluyente.\n\n==================================================\nREGLAS FINALES\n==================================================\n\n- Utiliza únicamente información proporcionada en el perfil y la vacante.\n- No inventes experiencia, conocimientos, años, herramientas o disponibilidad.\n- No confundas experiencia profesional total con experiencia profesional Data.\n- Diferencia herramientas dominadas, intermedias y en aprendizaje.\n- Considera proyectos como evidencia práctica, pero no como experiencia laboral.\n- Diferencia tecnologías núcleo, obligatorias y deseables.\n- No asignes números, puntos ni porcentajes.\n- No determines la recomendación final.\n- Devuelve únicamente la estructura solicitada por el Structured Output Parser."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        3568,
+        -144
+      ],
+      "id": "ebd1b1d2-2906-4216-9783-1344033047fb",
+      "name": "Analizar Compatibilidad con Perfil"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"evaluacion\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"experiencia_relacionada\": {\n          \"type\": \"string\",\n          \"enum\": [\"alta\", \"media_alta\", \"media\", \"baja\", \"nula\"]\n        },\n        \"herramientas_tecnologias\": {\n          \"type\": \"string\",\n          \"enum\": [\"alta\", \"media_alta\", \"media\", \"baja\", \"nula\"]\n        },\n        \"responsabilidades\": {\n          \"type\": \"string\",\n          \"enum\": [\"alta\", \"media_alta\", \"media\", \"baja\", \"nula\"]\n        },\n        \"industria_contexto\": {\n          \"type\": \"string\",\n          \"enum\": [\"alta\", \"media_alta\", \"media\", \"baja\", \"nula\"]\n        },\n        \"seniority\": {\n          \"type\": \"string\",\n          \"enum\": [\"compatible\", \"parcial\", \"no_compatible\"]\n        },\n        \"idioma\": {\n          \"type\": \"string\",\n          \"enum\": [\"compatible\", \"parcial\", \"no_compatible\"]\n        },\n        \"modalidad_ubicacion\": {\n          \"type\": \"string\",\n          \"enum\": [\"compatible\", \"parcial\", \"no_compatible\"]\n        },\n        \"salario\": {\n          \"type\": \"string\",\n          \"enum\": [\"compatible\", \"parcial\", \"no_compatible\"]\n        }\n      },\n      \"required\": [\n        \"experiencia_relacionada\",\n        \"herramientas_tecnologias\",\n        \"responsabilidades\",\n        \"industria_contexto\",\n        \"seniority\",\n        \"idioma\",\n        \"modalidad_ubicacion\",\n        \"salario\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"fortalezas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"habilidades_faltantes\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"motivo_recomendacion\": {\n      \"type\": \"string\"\n    },\n    \"requisitos_criticos_faltantes\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"tecnologias_nucleo_faltantes\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"tiene_requisito_excluyente\": {\n      \"type\": \"boolean\"\n    },\n    \"motivo_requisito_excluyente\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"evaluacion\",\n    \"fortalezas\",\n    \"habilidades_faltantes\",\n    \"motivo_recomendacion\",\n    \"requisitos_criticos_faltantes\",\n    \"tecnologias_nucleo_faltantes\",\n    \"tiene_requisito_excluyente\",\n    \"motivo_requisito_excluyente\"\n  ],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3648,
+        256
+      ],
+      "id": "6a65042c-e16c-44cc-a217-bf5bef740428",
+      "name": "Estructurar Scoring de Compatibilidad"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "=gpt-5-mini",
+          "mode": "id"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        3664,
+        -432
+      ],
+      "id": "cba7fd82-3475-4757-becb-5279de983ec2",
+      "name": "Evaluar Compatibilidad con OpenAI"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c16819c0-9843-45c3-a6d7-6dcf5399e966",
+              "name": "fuente",
+              "value": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.fuente }}",
+              "type": "string"
+            },
+            {
+              "id": "862e605e-98cd-46ad-a0f1-48e3871f007f",
+              "name": "source_job_id",
+              "value": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.source_job_id }}",
+              "type": "string"
+            },
+            {
+              "id": "be19b52f-60eb-4595-91ac-7bb994337f80",
+              "name": "puesto",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.puesto }}",
+              "type": "string"
+            },
+            {
+              "id": "4fbaf499-1000-44ca-9f52-8f247643df23",
+              "name": "empresa",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.empresa }}",
+              "type": "string"
+            },
+            {
+              "id": "12b033c0-6dda-4bb9-bb26-4f89d8189ea6",
+              "name": "ubicacion",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.ubicacion }}",
+              "type": "string"
+            },
+            {
+              "id": "0e9141bf-5e5b-4843-ab89-4769502c5f3e",
+              "name": "url",
+              "value": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "ff4e01c2-046e-4333-9693-ea56dfe33c5a",
+              "name": "fecha_publicacion",
+              "value": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.fecha_publicacion }}",
+              "type": "string"
+            },
+            {
+              "id": "5c9e797c-5948-40b8-a4b4-e2614faee0a2",
+              "name": "modalidad",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.modalidad }}",
+              "type": "string"
+            },
+            {
+              "id": "f04235bf-0f9d-445c-9784-f00d83546ef7",
+              "name": "tipo_jornada",
+              "value": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.tipo_jornada }}",
+              "type": "string"
+            },
+            {
+              "id": "fc9b9f94-d619-4f4d-97b2-635c1770f7b0",
+              "name": "salario_min",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.salario_min }}",
+              "type": "number"
+            },
+            {
+              "id": "6ab65edc-0ea0-4c4f-957a-17a0c0f63c04",
+              "name": "salario_max",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.salario_max }}",
+              "type": "number"
+            },
+            {
+              "id": "6c1824bd-7887-4e27-8d53-5e0d596c3ad3",
+              "name": "moneda",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.moneda }}",
+              "type": "string"
+            },
+            {
+              "id": "b6879685-0523-4d2b-bf3e-8520842ed1d4",
+              "name": "periodicidad_salario",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.periodicidad_salario }}",
+              "type": "string"
+            },
+            {
+              "id": "7946556a-6a4b-4fbf-b743-bd29e4676841",
+              "name": "seniority",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.seniority }}",
+              "type": "string"
+            },
+            {
+              "id": "35252bd2-e362-4e72-b0ce-9dd486b0ead2",
+              "name": "anos_experiencia",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.anos_experiencia }}",
+              "type": "number"
+            },
+            {
+              "id": "68894fc1-118c-4830-9073-2a6299e5a27d",
+              "name": "ingles",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.ingles }}",
+              "type": "string"
+            },
+            {
+              "id": "c7f3a2ce-daec-47bc-a54e-0dd908322820",
+              "name": "descripcion",
+              "value": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.descripcion }}",
+              "type": "string"
+            },
+            {
+              "id": "7627e128-1dd1-4d7a-bea4-7dca01b1d6b7",
+              "name": "resumen_ia",
+              "value": "={{ $('Analizar Vacante con IA').item.json.output.resumen }}",
+              "type": "string"
+            },
+            {
+              "id": "5576ff51-456f-4109-a113-f6ddbca07e32",
+              "name": "responsabilidades",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.responsabilidades) }}",
+              "type": "string"
+            },
+            {
+              "id": "eb6fe2f4-8699-4f18-be4e-47ef79510554",
+              "name": "requisitos_obligatorios",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.requisitos_obligatorios) }}",
+              "type": "string"
+            },
+            {
+              "id": "1fc7cc5a-ddff-4369-ace2-56a90eef42ca",
+              "name": "requisitos_deseables",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.requisitos_deseables) }}",
+              "type": "string"
+            },
+            {
+              "id": "5aad3aa9-4096-499a-a814-40961187e49c",
+              "name": "herramientas",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.herramientas) }}",
+              "type": "string"
+            },
+            {
+              "id": "9e8a5c0b-e57c-457b-8518-1a972817c10f",
+              "name": "compatibilidad",
+              "value": "={{ $json.compatibilidad }}",
+              "type": "number"
+            },
+            {
+              "id": "10b5b0b5-f585-4ae4-9ad9-239ba3b4e75f",
+              "name": "fortalezas",
+              "value": "={{ JSON.stringify($json.fortalezas) }}",
+              "type": "string"
+            },
+            {
+              "id": "d0a140ea-2615-4381-b531-ee8d4a8f1296",
+              "name": "habilidades_faltantes",
+              "value": "={{ JSON.stringify($json.habilidades_faltantes) }}",
+              "type": "string"
+            },
+            {
+              "id": "601e2544-bcab-45d8-b7f3-b59f44e7c907",
+              "name": "recomendacion",
+              "value": "={{ $json.recomendacion }}",
+              "type": "string"
+            },
+            {
+              "id": "9e0a215a-ac60-472b-a9bb-e88f0bfbdf36",
+              "name": "motivo_recomendacion",
+              "value": "={{ $json.motivo_recomendacion }}",
+              "type": "string"
+            },
+            {
+              "id": "563b6faf-3c7c-4a3e-aab7-da49b424c2d0",
+              "name": "score_detalle",
+              "value": "={{ JSON.stringify($json.score_detalle) }}",
+              "type": "string"
+            },
+            {
+              "id": "6f715c23-147c-4d2b-a873-61e3b0394b95",
+              "name": "via",
+              "value": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.via }}",
+              "type": "string"
+            },
+            {
+              "id": "41ee95a9-fbfc-4693-9ea4-731bde8c6625",
+              "name": "url_aplicar",
+              "value": "={{ $('Preparar Vacante SerpApi para Análisis').item.json.url_aplicar }}",
+              "type": "string"
+            },
+            {
+              "id": "84b8a44a-9600-44c6-af50-63c0062c2efe",
+              "name": "job_hash",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.job_hash }}",
+              "type": "string"
+            },
+            {
+              "id": "4db3e9d6-746a-4d26-a87c-d9b6a96f17c1",
+              "name": "estatus",
+              "value": "Nueva",
+              "type": "string"
+            },
+            {
+              "id": "8ffc572e-5dd3-4720-9e16-54866bbf25fd",
+              "name": "execution_id",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "53422ee3-c2fc-4788-9f7f-4a8c7403042b",
+              "name": "query_origen",
+              "value": "={{ $json.vacante.query_origen || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "4e5f5272-d785-4e86-85fb-4fbccefa5d3e",
+              "name": "lenguajes",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.lenguajes ?? []) }}",
+              "type": "string"
+            },
+            {
+              "id": "398469ad-04fb-4930-bcc4-7c23e6682d0d",
+              "name": "bases_datos",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.bases_datos ?? []) }}",
+              "type": "string"
+            },
+            {
+              "id": "28159d1b-4251-4fd0-b9ed-b7605ccc9b62",
+              "name": "herramientas_bi",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.herramientas_bi ?? []) }}",
+              "type": "string"
+            },
+            {
+              "id": "4eb8fb41-427b-4217-b674-e51e3d3b3a11",
+              "name": "competencias_data",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.competencias_data ?? []) }}",
+              "type": "string"
+            },
+            {
+              "id": "0e18b55d-1740-44a8-a377-3f440faa79d9",
+              "name": "tecnologias_nucleo",
+              "value": "={{ JSON.stringify($('Analizar Vacante con IA').item.json.output.tecnologias_nucleo ?? []) }}",
+              "type": "string"
+            },
+            {
+              "id": "f2d6d6ba-c0ba-47a1-9286-8fadb30455f8",
+              "name": "score_base",
+              "value": "={{ $json.score_base ?? 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "b49f5fce-ff93-4119-aa4e-87a06c060035",
+              "name": "penalizacion",
+              "value": "={{ $json.penalizacion ?? 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "a0cc8732-095b-4f47-9bc0-649eeae530dd",
+              "name": "requisitos_criticos_faltantes",
+              "value": "={{ JSON.stringify($json.requisitos_criticos_faltantes ?? []) }}",
+              "type": "string"
+            },
+            {
+              "id": "97a04c69-df02-4118-8bab-119fc729db05",
+              "name": "tecnologias_nucleo_faltantes",
+              "value": "={{ JSON.stringify($json.tecnologias_nucleo_faltantes ?? []) }}",
+              "type": "string"
+            },
+            {
+              "id": "9dd7b217-d3a6-4c67-9ae8-d1460e95d432",
+              "name": "tiene_requisito_excluyente",
+              "value": "={{ $json.tiene_requisito_excluyente ?? false }}",
+              "type": "string"
+            },
+            {
+              "id": "8a16f017-f3af-4225-a094-d119a09f19c0",
+              "name": "motivo_requisito_excluyente",
+              "value": "={{ $json.motivo_requisito_excluyente ?? '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        4384,
+        -528
+      ],
+      "id": "0f896c83-6172-43fe-ab80-da945193e582",
+      "name": "Integrar Scoring en Vacante"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.output;\nconst e = data.evaluacion;\n\n\n// ==============================\n// ESCALAS\n// ==============================\n\nconst escalas25 = {\n  alta: 25,\n  media_alta: 20,\n  media: 15,\n  baja: 8,\n  nula: 0,\n};\n\nconst escalas15 = {\n  alta: 15,\n  media_alta: 12,\n  media: 9,\n  baja: 5,\n  nula: 0,\n};\n\nconst escalas10 = {\n  alta: 10,\n  media_alta: 8,\n  media: 6,\n  baja: 3,\n  nula: 0,\n};\n\nconst escalasCompat10 = {\n  compatible: 10,\n  parcial: 5,\n  no_compatible: 0,\n};\n\nconst escalasCompat5 = {\n  compatible: 5,\n  parcial: 2,\n  no_compatible: 0,\n};\n\n\n// ==============================\n// SCORE POR DIMENSIÓN\n// ==============================\n\nconst scoreDetalle = {\n  experiencia_relacionada:\n    escalas25[e.experiencia_relacionada] ?? 0,\n\n  herramientas_tecnologias:\n    escalas25[e.herramientas_tecnologias] ?? 0,\n\n  responsabilidades:\n    escalas15[e.responsabilidades] ?? 0,\n\n  industria_contexto:\n    escalas10[e.industria_contexto] ?? 0,\n\n  seniority:\n    escalasCompat10[e.seniority] ?? 0,\n\n  idioma:\n    escalasCompat5[e.idioma] ?? 0,\n\n  modalidad_ubicacion:\n    escalasCompat5[e.modalidad_ubicacion] ?? 0,\n\n  salario:\n    escalasCompat5[e.salario] ?? 0,\n};\n\n\n// ==============================\n// SCORE BASE\n// ==============================\n\nconst scoreBase = Object.values(scoreDetalle)\n  .reduce((total, valor) => total + valor, 0);\n\n\n// ==============================\n// DATOS CRÍTICOS\n// ==============================\n\nconst requisitosCriticos =\n  Array.isArray(data.requisitos_criticos_faltantes)\n    ? data.requisitos_criticos_faltantes\n    : [];\n\nconst tecnologiasNucleoFaltantes =\n  Array.isArray(data.tecnologias_nucleo_faltantes)\n    ? data.tecnologias_nucleo_faltantes\n    : [];\n\nconst tieneRequisitoExcluyente =\n  data.tiene_requisito_excluyente === true;\n\n\n// ==============================\n// PENALIZACIONES\n// ==============================\n\nlet penalizacion = 0;\n\n// Penalización moderada por requisitos obligatorios faltantes.\n// El cap evita que una lista larga distorsione excesivamente el score.\npenalizacion += Math.min(\n  requisitosCriticos.length * 3,\n  12\n);\n\n\n// ==============================\n// SCORE AJUSTADO\n// ==============================\n\nlet compatibilidad = Math.max(\n  0,\n  scoreBase - penalizacion\n);\n\n\n// ==============================\n// REGLAS DE CONTROL\n// ==============================\n\n// Un requisito excluyente hace que la vacante\n// no sea viable para el candidato.\nif (tieneRequisitoExcluyente) {\n  compatibilidad = Math.min(compatibilidad, 59);\n}\n\n\n// Una tecnología núcleo faltante requiere revisión.\nif (tecnologiasNucleoFaltantes.length === 1) {\n  compatibilidad = Math.min(compatibilidad, 79);\n}\n\n\n// Dos tecnologías núcleo faltantes representan\n// un gap técnico considerable.\nif (tecnologiasNucleoFaltantes.length === 2) {\n  compatibilidad = Math.min(compatibilidad, 69);\n}\n\n\n// Tres o más tecnologías núcleo faltantes\n// hacen que el ajuste técnico sea insuficiente.\nif (tecnologiasNucleoFaltantes.length >= 3) {\n  compatibilidad = Math.min(compatibilidad, 59);\n}\n\n\n// Si la compatibilidad general de herramientas\n// es baja o nula, no puede recomendarse Aplicar.\nif (\n  e.herramientas_tecnologias === 'baja' ||\n  e.herramientas_tecnologias === 'nula'\n) {\n  compatibilidad = Math.min(compatibilidad, 79);\n}\n\n\n// ==============================\n// RECOMENDACIÓN\n// ==============================\n\nlet recomendacion;\n\nif (compatibilidad >= 80) {\n  recomendacion = 'Aplicar';\n} else if (compatibilidad >= 60) {\n  recomendacion = 'Revisar';\n} else {\n  recomendacion = 'Descartar';\n}\n\n\n// ==============================\n// OUTPUT\n// ==============================\n\nreturn {\n  json: {\n    vacante: {\n  ...$('Analizar Vacante con IA').item.json.output,\n  query_origen:\n  $('Preparar Vacante SerpApi para Análisis').item.json.query_origen || ''\n    },\n\n    score_base: scoreBase,\n    penalizacion,\n    compatibilidad,\n\n    score_detalle: scoreDetalle,\n\n    fortalezas:\n      data.fortalezas || [],\n\n    habilidades_faltantes:\n      data.habilidades_faltantes || [],\n\n    requisitos_criticos_faltantes:\n      requisitosCriticos,\n\n    tecnologias_nucleo_faltantes:\n      tecnologiasNucleoFaltantes,\n\n    tiene_requisito_excluyente:\n      tieneRequisitoExcluyente,\n\n    motivo_requisito_excluyente:\n      data.motivo_requisito_excluyente || '',\n\n    recomendacion,\n\n    motivo_recomendacion:\n      data.motivo_recomendacion || ''\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3904,
+        -128
+      ],
+      "id": "76a22fe8-e855-4d51-b248-1d2820f6402d",
+      "name": "Calcular Score de Compatibilidad"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1520,
+        336
+      ],
+      "id": "349519bf-e2c6-4dbd-baf8-9cb984b4756c",
+      "name": "Procesar Vacantes Relevantes"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bb2b0fc5-49e5-4d8d-85d2-224e37bd8524",
+              "leftValue": "={{ $json.prefiltro.relevante }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        752,
+        416
+      ],
+      "id": "63571544-0f7d-4c7c-99eb-2fccac5a9dc8",
+      "name": "Validar Relevancia de Vacante"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $json;\n\nfunction normalizar(texto = '') {\n  return texto\n    .toString()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .trim()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-+|-+$/g, '');\n}\n\nconst empresa = normalizar(item.empresa);\nconst puesto = normalizar(item.puesto);\nconst ubicacion = normalizar(item.ubicacion);\n\nconst job_id = `${empresa}__${puesto}__${ubicacion}`;\n\nreturn {\n  json: {\n    ...item,\n    job_id\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4384,
+        -96
+      ],
+      "id": "8e70081f-0416-4d9a-b3f6-1933e8e7ba1a",
+      "name": "Generar ID de Vacante"
+    },
+    {
+      "parameters": {
+        "jsCode": "const normalize = (value = '') => {\n  return String(value)\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^a-z0-9\\s]/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n};\n\nreturn items.map(item => {\n  const empresa = normalize(item.json.empresa);\n  const puesto = normalize(item.json.puesto);\n  const ubicacion = normalize(item.json.ubicacion);\n\n  const job_hash = `${empresa}|${puesto}|${ubicacion}`;\n\n  return {\n    json: {\n      ...item.json,\n      job_hash\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -256
+      ],
+      "id": "4c7f1582-79d3-409b-a2c7-01e640f7bd1c",
+      "name": "Generar Hash de Vacante"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "341c3353-a982-4266-8c39-9463bd050ad6",
+              "name": "fuente",
+              "value": "serpapi_google_jobs",
+              "type": "string"
+            },
+            {
+              "id": "b55fc80b-7ef8-4b41-9596-ae5531019aca",
+              "name": "source_job_id",
+              "value": "={{ $json.job_id }}",
+              "type": "string"
+            },
+            {
+              "id": "a03a172b-f0d1-41dd-8e4f-70172405463b",
+              "name": "=puesto",
+              "value": "={{ $json.title || $json.job_title || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "e0161732-648a-4a99-9f32-2e21480529e5",
+              "name": "empresa",
+              "value": "={{ $json.company_name }}",
+              "type": "string"
+            },
+            {
+              "id": "19ceed59-2d0d-4670-a24b-428191d8807e",
+              "name": "ubicacion",
+              "value": "={{ $json.location }}",
+              "type": "string"
+            },
+            {
+              "id": "705c2712-5cc1-430c-aee3-2e340ab015ad",
+              "name": "descripcion",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "8743423d-a339-43fb-b307-9deacd6017f3",
+              "name": "url",
+              "value": "={{ $json.source_link || $json.apply_options?.[0]?.link || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "74ad115c-2a3d-4300-8d7f-a0be92f832d2",
+              "name": "fecha_publicacion",
+              "value": "={{ $json.detected_extensions?.posted_at || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "155740e4-325a-40ff-9323-c0b06f00be12",
+              "name": "tipo_jornada",
+              "value": "={{ $json.detected_extensions?.schedule_type || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "435202a2-b414-4a1b-a7be-4154a5584319",
+              "name": "salario_texto",
+              "value": "={{ $json.detected_extensions?.salary || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "8a0633c6-055f-48b1-bbd4-04a667d7408f",
+              "name": "via",
+              "value": "={{ $json.via || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "77d4b8d7-a126-4696-a5c5-f77a5387cafa",
+              "name": "url_aplicar",
+              "value": "={{ $json.apply_options?.[0]?.link || $json.source_link || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "596c9aa1-ff9f-4582-829d-f2ad209a30bd",
+              "name": "query_origen",
+              "value": "={{ $json.query_origen || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        768,
+        -560
+      ],
+      "id": "bfbc3597-87e4-4744-8e27-581f4b57c2c1",
+      "name": "Normalizar Vacante Google Jobs"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEETS_DOCUMENT_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "VACANTES"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "execution_id",
+              "lookupValue": "={{ $json.execution_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2944,
+        -944
+      ],
+      "id": "a3e03e33-8832-491f-8921-73ff14e0e33f",
+      "name": "Buscar Vacantes de esta Ejecución",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const vacantes = items.map(item => item.json);\n\n// ==============================\n// ORDENAR POR COMPATIBILIDAD\n// ==============================\n\nvacantes.sort(\n  (a, b) =>\n    Number(b.compatibilidad || 0) -\n    Number(a.compatibilidad || 0)\n);\n\n// ==============================\n// CLASIFICAR\n// ==============================\n\nconst aplicar = vacantes.filter(\n  v => v.recomendacion === 'Aplicar'\n);\n\nconst revisar = vacantes.filter(\n  v => v.recomendacion === 'Revisar'\n);\n\nconst descartadas = vacantes.filter(\n  v => v.recomendacion === 'Descartar'\n);\n\n// Vacantes que sí queremos mostrar individualmente\nconst oportunidades = [\n  ...aplicar,\n  ...revisar\n];\n\n// ==============================\n// UTILIDADES\n// ==============================\n\nfunction escapeHtml(texto = '') {\n  return String(texto)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#039;');\n}\n\nfunction convertirLista(valor) {\n  if (Array.isArray(valor)) {\n    return valor;\n  }\n\n  if (!valor) {\n    return [];\n  }\n\n  try {\n    const parsed = JSON.parse(valor);\n    return Array.isArray(parsed) ? parsed : [valor];\n  } catch {\n    return [valor];\n  }\n}\n\nfunction crearLista(valor, limite = 3) {\n  const lista = convertirLista(valor)\n    .filter(Boolean)\n    .slice(0, limite);\n\n  if (lista.length === 0) {\n    return '';\n  }\n\n  return lista\n    .map(elemento => `• ${escapeHtml(elemento)}`)\n    .join('<br>');\n}\n\nfunction crearSalario(v) {\n  const min = Number(v.salario_min || 0);\n  const max = Number(v.salario_max || 0);\n\n  if (min === 0 && max === 0) {\n    return '';\n  }\n\n  const moneda =\n    v.moneda && v.moneda !== 'No especificado'\n      ? escapeHtml(v.moneda)\n      : '';\n\n  const periodicidad =\n    v.periodicidad_salario &&\n    v.periodicidad_salario !== 'No especificado'\n      ? ` / ${escapeHtml(v.periodicidad_salario)}`\n      : '';\n\n  if (min > 0 && max > 0 && min !== max) {\n    return `\n      <p style=\"margin:4px 0;\">\n        💰 ${min.toLocaleString()} - ${max.toLocaleString()} ${moneda}${periodicidad}\n      </p>\n    `;\n  }\n\n  const salario = min || max;\n\n  return `\n    <p style=\"margin:4px 0;\">\n      💰 ${salario.toLocaleString()} ${moneda}${periodicidad}\n    </p>\n  `;\n}\n\n// ==============================\n// TARJETA DE VACANTE\n// ==============================\n\nfunction crearVacante(v) {\n\n  const puesto =\n    escapeHtml(v.puesto || 'Puesto no especificado');\n\n  const empresa =\n    escapeHtml(v.empresa || 'Empresa no especificada');\n\n  const ubicacion =\n    escapeHtml(v.ubicacion || 'No especificada');\n\n  const modalidad =\n    escapeHtml(v.modalidad || 'No especificada');\n\n  const recomendacion =\n    escapeHtml(v.recomendacion || '');\n\n  const compatibilidad =\n    Number(v.compatibilidad || 0);\n\n  const scoreBase =\n    Number(v.score_base || 0);\n\n  const url =\n    v.url_aplicar || v.url || '#';\n\n  const fortalezas =\n    crearLista(v.fortalezas, 3);\n\n  const gapsCriticos =\n    crearLista(v.requisitos_criticos_faltantes, 3);\n\n  const tecnologiasFaltantes =\n    crearLista(v.tecnologias_nucleo_faltantes, 3);\n\n  const gapsGenerales =\n    crearLista(v.habilidades_faltantes, 3);\n\n  const motivo =\n    v.motivo_recomendacion\n      ? escapeHtml(v.motivo_recomendacion)\n      : '';\n\n  return `\n    <div style=\"\n      margin-bottom:24px;\n      padding:18px;\n      border:1px solid #ddd;\n      border-radius:10px;\n    \">\n\n      <h3 style=\"margin:0 0 8px 0;\">\n        ${puesto}\n      </h3>\n\n      <p style=\"margin:4px 0;\">\n        <strong>${empresa}</strong>\n      </p>\n\n      <p style=\"margin:4px 0;\">\n        📍 ${ubicacion}\n      </p>\n\n      <p style=\"margin:4px 0;\">\n        🏠 ${modalidad}\n      </p>\n\n      ${crearSalario(v)}\n\n      <p style=\"margin:4px 0;\">\n        🎯 Compatibilidad:\n        <strong>${compatibilidad}%</strong>\n      </p>\n\n      ${\n        scoreBase > 0 && scoreBase !== compatibilidad\n          ? `\n            <p style=\"margin:4px 0;\">\n              📊 Score base:\n              <strong>${scoreBase}%</strong>\n            </p>\n          `\n          : ''\n      }\n\n      <p style=\"margin:4px 0;\">\n        📌 Recomendación:\n        <strong>${recomendacion}</strong>\n      </p>\n\n      ${\n        fortalezas\n          ? `\n            <p style=\"margin:12px 0 4px 0;\">\n              <strong>✅ Fortalezas</strong>\n            </p>\n            <p style=\"margin:0;\">\n              ${fortalezas}\n            </p>\n          `\n          : ''\n      }\n\n      ${\n        gapsCriticos\n          ? `\n            <p style=\"margin:12px 0 4px 0;\">\n              <strong>⚠️ Requisitos críticos faltantes</strong>\n            </p>\n            <p style=\"margin:0;\">\n              ${gapsCriticos}\n            </p>\n          `\n          : ''\n      }\n\n      ${\n        tecnologiasFaltantes\n          ? `\n            <p style=\"margin:12px 0 4px 0;\">\n              <strong>🧩 Tecnologías núcleo faltantes</strong>\n            </p>\n            <p style=\"margin:0;\">\n              ${tecnologiasFaltantes}\n            </p>\n          `\n          : ''\n      }\n\n      ${\n        !gapsCriticos && !tecnologiasFaltantes && gapsGenerales\n          ? `\n            <p style=\"margin:12px 0 4px 0;\">\n              <strong>⚠️ Principales gaps</strong>\n            </p>\n            <p style=\"margin:0;\">\n              ${gapsGenerales}\n            </p>\n          `\n          : ''\n      }\n\n      ${\n        motivo\n          ? `\n            <p style=\"margin:12px 0 4px 0;\">\n              <strong>💡 Evaluación</strong>\n            </p>\n            <p style=\"margin:0;\">\n              ${motivo}\n            </p>\n          `\n          : ''\n      }\n\n      <p style=\"margin:16px 0 0 0;\">\n        <a href=\"${escapeHtml(url)}\">\n          Ver / aplicar a la vacante\n        </a>\n      </p>\n\n    </div>\n  `;\n}\n\n// ==============================\n// CONSTRUIR EMAIL\n// ==============================\n\nlet html = `\n  <h2>📊 Data Career Copilot — Vacantes nuevas</h2>\n\n  <p>\n    Se analizaron\n    <strong>${vacantes.length}</strong>\n    vacantes nuevas en esta ejecución.\n  </p>\n\n  <p>\n    ⭐ <strong>${aplicar.length}</strong> para aplicar<br>\n    🔎 <strong>${revisar.length}</strong> para revisar<br>\n    ⛔ <strong>${descartadas.length}</strong> descartadas\n  </p>\n`;\n\n// ==============================\n// APLICAR\n// ==============================\n\nif (aplicar.length > 0) {\n\n  html += `\n    <h2>⭐ Recomendadas para aplicar</h2>\n\n    <p>\n      Oportunidades con alta compatibilidad con tu perfil.\n    </p>\n\n    ${aplicar.map(crearVacante).join('')}\n  `;\n}\n\n// ==============================\n// REVISAR\n// ==============================\n\nif (revisar.length > 0) {\n\n  html += `\n    <h2>🔎 Oportunidades para revisar</h2>\n\n    <p>\n      Vacantes con compatibilidad relevante, pero con brechas\n      o requisitos que conviene validar antes de aplicar.\n    </p>\n\n    ${revisar.map(crearVacante).join('')}\n  `;\n}\n\n// ==============================\n// SIN OPORTUNIDADES\n// ==============================\n\nif (oportunidades.length === 0) {\n\n  html += `\n    <p>\n      En esta ejecución no se encontraron oportunidades clasificadas\n      como <strong>Aplicar</strong> o <strong>Revisar</strong>.\n    </p>\n  `;\n}\n\n// ==============================\n// RETURN\n// ==============================\n\nreturn [\n  {\n    json: {\n\n      total_vacantes_nuevas: vacantes.length,\n\n      total_aplicar: aplicar.length,\n\n      total_revisar: revisar.length,\n\n      total_descartar: descartadas.length,\n\n      total_oportunidades: oportunidades.length,\n\n      asunto:\n        `Data Career Copilot — ${aplicar.length} para aplicar · ${revisar.length} para revisar`,\n\n      cuerpo_html: html\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3664,
+        -944
+      ],
+      "id": "c1e239ba-cc13-4ff8-bd02-df3a27cdd9f0",
+      "name": "Preparar Resumen de Vacantes"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      execution_id: String($execution.id)\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2272,
+        -960
+      ],
+      "id": "67111681-3937-4c79-a158-d59977080508",
+      "name": "Preparar ID de Ejecución"
+    },
+    {
+      "parameters": {
+        "sendTo": "your_email@example.com",
+        "subject": "={{ $json.asunto }}",
+        "message": "={{ $json.cuerpo_html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4384,
+        -960
+      ],
+      "id": "c11e2f67-6bb9-4527-afbb-3854e89a591c",
+      "name": "Send a message"
+    },
+    {
+      "parameters": {
+        "content": "02 — Normalización y Relevancia",
+        "height": 1360,
+        "width": 448,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        608,
+        -656
+      ],
+      "typeVersion": 1,
+      "id": "e532378b-095a-41e6-b206-c2df9eff6e63",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "03 — Deduplicación",
+        "height": 1360,
+        "width": 816,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1184,
+        -656
+      ],
+      "typeVersion": 1,
+      "id": "8758c0c7-2e4f-4400-b4f5-bc3f8da4d4e0",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "04 — Análisis de Vacante con IA",
+        "height": 1216,
+        "width": 528,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2176,
+        -656
+      ],
+      "typeVersion": 1,
+      "id": "574c016c-5807-49f7-a0b2-23c9698c5230",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "05 — Perfil del Candidato",
+        "height": 1216,
+        "width": 544,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2784,
+        -656
+      ],
+      "typeVersion": 1,
+      "id": "7abcd3b1-f5b1-4a67-99a7-bb9e38b94f13",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "06 — Matching y Career Scoring",
+        "height": 1216,
+        "width": 544,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3488,
+        -656
+      ],
+      "typeVersion": 1,
+      "id": "1cce2a03-8b9b-46ca-8077-fee9a2e5d2e4",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "07 — Persistencia y CRM",
+        "height": 1376,
+        "width": 544,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4208,
+        -656
+      ],
+      "typeVersion": 1,
+      "id": "a94c17c0-05cc-433e-816e-bd598b02c676",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "08 — Resumen y Notificaciones",
+        "height": 320,
+        "width": 2784,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1984,
+        -1104
+      ],
+      "typeVersion": 1,
+      "id": "82e0addd-7b28-4fcc-a6cb-650137a5fd53",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      query: '(\"Data Analyst\" OR \"Analista de Datos\")',\n      query_tipo: 'data_analyst'\n    }\n  },\n  {\n    json: {\n      query: '(\"Business Intelligence Analyst\" OR \"BI Analyst\" OR \"Analista BI\")',\n      query_tipo: 'business_intelligence'\n    }\n  },\n  {\n    json: {\n      query: '(\"Operations Analyst\" OR \"Operations Analytics\" OR \"Analista de Operaciones\") AND (\"SQL\" OR \"Power BI\" OR \"datos\")',\n      query_tipo: 'operations_analytics'\n    }\n  },\n  {\n    json: {\n      query: '(\"Business Analyst\" OR \"Business Analytics\" OR \"Analista de Negocio\") AND (\"SQL\" OR \"Power BI\" OR \"datos\")',\n      query_tipo: 'business_analytics'\n    }\n  },\n  {\n    json: {\n      query: '(\"Data Analyst\" OR \"BI Analyst\" OR \"Analista de Datos\") AND (\"automation\" OR \"automatización\" OR \"Python\")',\n      query_tipo: 'data_automation'\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -288,
+        32
+      ],
+      "id": "5792c67a-0f53-423a-8092-8a61278c9799",
+      "name": "Generar Consultas de Búsqueda"
+    },
+    {
+      "parameters": {
+        "jsCode": "const resultados = [];\nconst vistos = new Set();\n\nfor (const item of items) {\n  const jobs = item.json.jobs_results || [];\n\n  const query =\n    item.json.search_parameters?.q ||\n    item.json.search_parameters?.query ||\n    '';\n\n  for (const job of jobs) {\n    const id =\n      job.job_id ||\n      `${job.title}|${job.company_name}|${job.location}`;\n\n    if (vistos.has(id)) {\n      continue;\n    }\n\n    vistos.add(id);\n\n    resultados.push({\n      json: {\n        ...job,\n        query_origen: query\n      }\n    });\n  }\n}\n\nreturn resultados;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        32
+      ],
+      "id": "f4694514-0d0f-4a07-a2cf-c3899ccc08d5",
+      "name": "Separar Vacantes Encontradas"
+    },
+    {
+      "parameters": {
+        "content": "01 Busqueda y consumo de datos\n\n",
+        "height": 320,
+        "width": 912,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -432,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "82d026ab-9b02-41a4-9ced-aee5fb1a991c",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEETS_DOCUMENT_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "VACANTES"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        -608
+      ],
+      "id": "70f4d4b8-c8d4-4d01-ba6b-d9cd2bd09162",
+      "name": "Leer Vacantes Existentes del CRM",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// ======================================================\n// AI CAREER COPILOT\n// Deduplicación en memoria contra el CRM\n// ======================================================\n\n// Vacantes que pasaron el prefiltro\nconst vacantes = $('Validar Relevancia de Vacante')\n  .all()\n  .map(item => item.json);\n\n// Filas existentes recuperadas del CRM\nconst crm = $('Leer Vacantes Existentes del CRM')\n  .all()\n  .map(item => item.json);\n\n\n// ------------------------------------------------------\n// 1. Normalización\n// ------------------------------------------------------\n\nfunction normalizar(valor) {\n  return String(valor ?? '').trim();\n}\n\n\n// ------------------------------------------------------\n// 2. Crear índices de registros existentes\n// ------------------------------------------------------\n\nconst sourceIdsExistentes = new Set(\n  crm\n    .map(row => normalizar(row.source_job_id))\n    .filter(Boolean)\n);\n\nconst hashesExistentes = new Set(\n  crm\n    .map(row => normalizar(row.job_hash))\n    .filter(Boolean)\n);\n\n\n// ------------------------------------------------------\n// 3. Deduplicar\n// ------------------------------------------------------\n\nconst vacantesNuevas = [];\n\nconst sourceIdsVistos = new Set();\nconst hashesVistos = new Set();\n\nfor (const vacante of vacantes) {\n\n  const sourceJobId = normalizar(vacante.source_job_id);\n  const jobHash = normalizar(vacante.job_hash);\n\n  // Ya existe en el CRM por ID exacto\n  const duplicadaPorSourceId =\n    sourceJobId &&\n    sourceIdsExistentes.has(sourceJobId);\n\n  // Ya existe en el CRM por hash\n  const duplicadaPorHash =\n    jobHash &&\n    hashesExistentes.has(jobHash);\n\n  if (duplicadaPorSourceId || duplicadaPorHash) {\n    continue;\n  }\n\n  // --------------------------------------------------\n  // 4. Evitar duplicados dentro de ESTA ejecución\n  // --------------------------------------------------\n\n  const repetidaEnEjecucionPorSourceId =\n    sourceJobId &&\n    sourceIdsVistos.has(sourceJobId);\n\n  const repetidaEnEjecucionPorHash =\n    jobHash &&\n    hashesVistos.has(jobHash);\n\n  if (\n    repetidaEnEjecucionPorSourceId ||\n    repetidaEnEjecucionPorHash\n  ) {\n    continue;\n  }\n\n  // Registrar como vista\n  if (sourceJobId) {\n    sourceIdsVistos.add(sourceJobId);\n  }\n\n  if (jobHash) {\n    hashesVistos.add(jobHash);\n  }\n\n  // Vacante realmente nueva\n  vacantesNuevas.push({\n    json: {\n      ...vacante,\n      deduplicacion: {\n        nueva: true,\n        source_job_id_verificado: Boolean(sourceJobId),\n        job_hash_verificado: Boolean(jobHash)\n      }\n    }\n  });\n}\n\n\n// ------------------------------------------------------\n// 5. Salida\n// ------------------------------------------------------\n\nreturn vacantesNuevas;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        -240
+      ],
+      "id": "2798cd4e-ef1d-40b1-b3cb-148b7b92a711",
+      "name": "Deduplicar Vacantes contra CRM"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4db0003b-76c4-47ca-98e3-a76d38ec8863",
+              "name": "fuente",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.fuente }}",
+              "type": "string"
+            },
+            {
+              "id": "35432bf7-e63d-490c-961c-248ad6075c26",
+              "name": "source_job_id",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.source_job_id }}",
+              "type": "string"
+            },
+            {
+              "id": "c04c7aad-fbca-402d-ae31-8b5018581a74",
+              "name": "puesto",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.puesto }}",
+              "type": "string"
+            },
+            {
+              "id": "21239930-16d7-4a6b-abb0-890bbfa42a3d",
+              "name": "empresa",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.empresa }}",
+              "type": "string"
+            },
+            {
+              "id": "51a38ec8-595d-464b-8f0c-5b97713f57d0",
+              "name": "ubicacion",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.ubicacion }}",
+              "type": "string"
+            },
+            {
+              "id": "94b2cbf3-c9bf-434c-b279-52e58fbf659c",
+              "name": "descripcion",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.descripcion }}",
+              "type": "string"
+            },
+            {
+              "id": "368a3302-59cb-4f5e-a170-560972cabd64",
+              "name": "url",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "76bf726f-d189-41b6-8dbd-2b78109a372f",
+              "name": "fecha_publicacion",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.fecha_publicacion }}",
+              "type": "string"
+            },
+            {
+              "id": "7f593994-3cb7-46bd-8e0f-58bbce25386b",
+              "name": "tipo_jornada",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.tipo_jornada }}",
+              "type": "string"
+            },
+            {
+              "id": "d41de815-6a37-44ad-a8e3-4461c733626a",
+              "name": "salario_texto",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.salario_texto }}",
+              "type": "string"
+            },
+            {
+              "id": "73ff2b2a-69f5-4734-80af-2d7466084e06",
+              "name": "via",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.via }}",
+              "type": "string"
+            },
+            {
+              "id": "1b7ea4f6-e745-4516-8c6a-cfb8b992a6dc",
+              "name": "url_aplicar",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.url_aplicar }}",
+              "type": "string"
+            },
+            {
+              "id": "0a41dcc3-d8ba-4c0c-a599-bedf324fe814",
+              "name": "query_origen",
+              "value": "={{ $('Procesar Vacantes Relevantes').item.json.query_origen || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2048,
+        -112
+      ],
+      "id": "7dbf4408-aebd-4f28-afde-057865d63f4e",
+      "name": "Preparar Vacante SerpApi para Análisis"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                2,
+                5
+              ],
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -672,
+        32
+      ],
+      "id": "bc013909-66da-4c11-9d8f-ee5fb593c762",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "connections": {
+    "Consultar Vacantes en Google Jobs": {
+      "main": [
+        [
+          {
+            "node": "Separar Vacantes Encontradas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar Vacantes Relevantes": {
+      "main": [
+        [
+          {
+            "node": "Validar Relevancia de Vacante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar con OpenAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analizar Vacante con IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estructurar Datos de Vacante": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analizar Vacante con IA",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Perfil Candidato": {
+      "main": [
+        [
+          {
+            "node": "Estructurar Perfil Candidato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estructurar Perfil Candidato": {
+      "main": [
+        [
+          {
+            "node": "Analizar Compatibilidad con Perfil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analizar Compatibilidad con Perfil": {
+      "main": [
+        [
+          {
+            "node": "Calcular Score de Compatibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estructurar Scoring de Compatibilidad": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analizar Compatibilidad con Perfil",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar Compatibilidad con OpenAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analizar Compatibilidad con Perfil",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Integrar Scoring en Vacante": {
+      "main": [
+        [
+          {
+            "node": "Generar ID de Vacante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Score de Compatibilidad": {
+      "main": [
+        [
+          {
+            "node": "Integrar Scoring en Vacante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Vacantes Relevantes": {
+      "main": [
+        [
+          {
+            "node": "Preparar ID de Ejecución",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Vacante SerpApi para Análisis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Relevancia de Vacante": {
+      "main": [
+        [
+          {
+            "node": "Leer Vacantes Existentes del CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Analizar Vacante con IA": {
+      "main": [
+        [
+          {
+            "node": "Leer Perfil Candidato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar ID de Vacante": {
+      "main": [
+        [
+          {
+            "node": "Guardar Vacante en CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Vacante en CRM": {
+      "main": [
+        [
+          {
+            "node": "Procesar Vacantes Relevantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Hash de Vacante": {
+      "main": [
+        [
+          {
+            "node": "Filtrar Vacantes Relevantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Vacante Google Jobs": {
+      "main": [
+        [
+          {
+            "node": "Generar Hash de Vacante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Vacantes de esta Ejecución": {
+      "main": [
+        [
+          {
+            "node": "Preparar Resumen de Vacantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar ID de Ejecución": {
+      "main": [
+        [
+          {
+            "node": "Buscar Vacantes de esta Ejecución",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Resumen de Vacantes": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Consultas de Búsqueda": {
+      "main": [
+        [
+          {
+            "node": "Consultar Vacantes en Google Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Vacantes Encontradas": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Vacante Google Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Vacantes Existentes del CRM": {
+      "main": [
+        [
+          {
+            "node": "Deduplicar Vacantes contra CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicar Vacantes contra CRM": {
+      "main": [
+        [
+          {
+            "node": "Procesar Vacantes Relevantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Vacante SerpApi para Análisis": {
+      "main": [
+        [
+          {
+            "node": "Analizar Vacante con IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generar Consultas de Búsqueda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "America/Mexico_City",
+    "callerPolicy": "workflowsFromSameOwner",
+    "timeSavedPerExecution": 60
+  },
+  "nodeGroups": []
+}
