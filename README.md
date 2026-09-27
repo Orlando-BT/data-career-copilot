@@ -1091,46 +1091,21 @@ Detailed setup and deployment instructions are planned for a future `docs/local-
 # Repository Structure
 
 ```text
-
 data-career-copilot/
-
 │
-
 ├── README.md
-
 ├── .gitignore
-
 ├── .env.example
-
 │
-
 ├── workflows/
-
 │   └── data-career-copilot.sanitized.json
-
 │
-
 ├── docs/
-
-│   ├── architecture.md
-
-│   ├── pipeline.md
-
-│   ├── relevance-filter.md
-
-│   ├── matching-scoring.md
-
-│   ├── validation.md
-
-│   ├── local-deployment.md
-
-│   └── security.md
-
+│   └── architecture.md
 │
-
 └── assets/
-
-    └── architecture-diagram.png
+    ├── data-career-copilot-architecture.png
+    └── n8n-workflow-overview.jpeg
 
 ```
 
