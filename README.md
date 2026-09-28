@@ -126,6 +126,9 @@ Prioritized Notification
 
 ```
 
+> For the classifier design, validation methodology, confusion matrix, error analysis, and V1 → V1.1 evolution, see the [Relevance Filter documentation](docs/relevance-filter.md).
+
+
 ---
 
 ## Technology Stack
@@ -1123,7 +1126,8 @@ data-career-copilot/
 │
 ├── docs/
 │   ├── architecture.md
-│   └── pipeline.md
+│   ├── pipeline.md
+│   └── relevance-filter.md
 │
 └── assets/
     ├── data-career-copilot-architecture.png
