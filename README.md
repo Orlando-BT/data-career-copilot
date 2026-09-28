@@ -34,6 +34,16 @@ I built an end-to-end job intelligence pipeline that automatically discovers vac
 
 ## Solution Overview
 
+### System Architecture
+
+![Data Career Copilot System Architecture](assets/data-career-copilot-architecture.png)
+
+> High-level architecture of Data Career Copilot, combining deterministic processing, LLM-based semantic analysis, candidate data, rule-based scoring, CRM persistence, and automated notifications.
+
+For a detailed technical breakdown, see [System Architecture](docs/architecture.md).
+
+### Pipeline Stages
+
 The pipeline is organized into eight stages:
 
 ```text
@@ -141,6 +151,17 @@ Prioritized Notification
 | **Docker** | Portable local n8n runtime |
 
 | **Git / GitHub** | Version control and project documentation |
+
+---
+## Implementation Preview
+
+![Data Career Copilot n8n Workflow](assets/n8n-workflow-overview.jpeg)
+
+> Real n8n workflow execution. The production pipeline orchestrates job discovery, deterministic relevance filtering, deduplication, structured LLM extraction, candidate-profile retrieval, semantic matching, rule-based scoring, CRM persistence, and prioritized email notification.
+
+The workflow is organized into eight functional areas that mirror the system architecture described above.
+
+For a node-by-node explanation, see [Pipeline Documentation](docs/pipeline.md).
 
 ---
 
@@ -1101,12 +1122,12 @@ data-career-copilot/
 │   └── data-career-copilot.sanitized.json
 │
 ├── docs/
-│   └── architecture.md
+│   ├── architecture.md
+│   └── pipeline.md
 │
 └── assets/
     ├── data-career-copilot-architecture.png
     └── n8n-workflow-overview.jpeg
-
 ```
 
 The public workflow will contain the system logic while excluding private credentials and environment-specific identifiers.
