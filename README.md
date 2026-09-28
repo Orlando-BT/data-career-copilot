@@ -155,7 +155,7 @@ Prioritized Notification
 ---
 ## Implementation Preview
 
-![Data Career Copilot n8n Workflow](assets/n8n-workflow-overview.jpeg)
+![Data Career Copilot n8n Workflow](assets/n8n-workflow-overview.png)
 
 > Real n8n workflow execution. The production pipeline orchestrates job discovery, deterministic relevance filtering, deduplication, structured LLM extraction, candidate-profile retrieval, semantic matching, rule-based scoring, CRM persistence, and prioritized email notification.
 
@@ -1127,7 +1127,7 @@ data-career-copilot/
 │
 └── assets/
     ├── data-career-copilot-architecture.png
-    └── n8n-workflow-overview.jpeg
+    └── n8n-workflow-overview.png
 ```
 
 The public workflow will contain the system logic while excluding private credentials and environment-specific identifiers.
