@@ -418,6 +418,8 @@ The final result is classified into three actionable categories:
 
 This hybrid approach makes the final prioritization more **reproducible, explainable, and auditable** than asking an LLM to invent a compatibility percentage directly.
 
+> For the complete matching methodology, scoring weights, penalties, compatibility caps, validation cases, and design rationale, see the [Candidate Matching & Deterministic Scoring documentation](docs/matching-scoring.md).
+
 ---
 
 ## 7. CRM Persistence
@@ -1126,6 +1128,7 @@ data-career-copilot/
 │
 ├── docs/
 │   ├── architecture.md
+│   ├── matching-scoring.md
 │   ├── pipeline.md
 │   └── relevance-filter.md
 │
