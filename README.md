@@ -552,6 +552,8 @@ Instead of manually reviewing all 47 new vacancies with the same level of attent
 
 > These numbers represent one validated execution and should not be interpreted as a global accuracy measurement of the system.
 
+> For the complete validation methodology, component benchmarks, regression cases, end-to-end testing, and current validation boundaries, see the [Validation documentation](docs/validation.md).
+
 ---
 
 ## Relevance Filter Validation
@@ -1130,7 +1132,8 @@ data-career-copilot/
 │   ├── architecture.md
 │   ├── matching-scoring.md
 │   ├── pipeline.md
-│   └── relevance-filter.md
+│   ├── relevance-filter.md
+│   └── validation.md
 │
 └── assets/
     ├── data-career-copilot-architecture.png
