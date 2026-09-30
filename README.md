@@ -1084,6 +1084,8 @@ Public workflow exports must be sanitized before publication to remove:
 
 The production workflow should never be published directly without this sanitization step.
 
+> For the complete secret-management strategy, n8n credential handling, workflow sanitization process, and safe-export checklist, see the [Security & Public Repository Sanitization documentation](docs/security.md).
+
 ---
 
 # Deployment
@@ -1133,6 +1135,7 @@ data-career-copilot/
 │   ├── matching-scoring.md
 │   ├── pipeline.md
 │   ├── relevance-filter.md
+│   ├── security.md
 │   └── validation.md
 │
 └── assets/
