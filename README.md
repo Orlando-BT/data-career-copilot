@@ -1114,8 +1114,6 @@ Data Career Copilot
 
 The environment uses persistent Docker storage so workflow configuration survives container recreation.
 
-Detailed setup and deployment instructions are planned for a future `docs/local-deployment.md` document.
-
 ---
 
 # Repository Structure
@@ -1143,7 +1141,7 @@ data-career-copilot/
     └── n8n-workflow-overview.png
 ```
 
-The public workflow will contain the system logic while excluding private credentials and environment-specific identifiers.
+The public workflow contains the system logic while excluding private credentials and environment-specific identifiers.
 
 ---
 
